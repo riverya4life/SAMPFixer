@@ -910,7 +910,7 @@ local Frame = imgui.OnFrame(
 				imgui.Ques("После включения этой функции вы должны перезайти в игру.")
 				
 			elseif tab[0] == 4 then
-				imgui.Text(fa.DATABASE..u8' Команды скрипта')
+				imgui.Text(fa.DATABASE..u8' Команды скрипта (большая часть возможно не работает)')
 				imgui.Separator()
 				
 					for _,v in ipairs(commands) do
