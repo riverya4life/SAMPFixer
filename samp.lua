@@ -57,7 +57,7 @@ local ini = inicfg.load(inicfg.load({
 		sunfix = false,
 		grassfix = false,
 		moneyfontfix = false,
-		starsdisplay = false,
+		starsondisplay = false,
 	},
 	themesetting = {
 		theme = 6,
@@ -69,6 +69,9 @@ local ini = inicfg.load(inicfg.load({
 	commands = {
 		openmenu = "/riverya",	
 		animmoney = "/animmoney",
+		shownicks = "/shownicks",
+		showhp = "/showhp",
+		gameradio = "/gameradio",
 	}
 }, directIni))
 inicfg.save(ini, directIni)
@@ -125,6 +128,7 @@ local checkboxes = {
 local buffers = {
 	cmd_openmenu = imgui.new.char[64](ini.commands.openmenu),
 	cmd_animmoney = imgui.new.char[64](ini.commands.animmoney),
+	cmd_shownicks = imgui.new.char[64](ini.commands.shownicks),
 }
 
 local int_item = imgui.new.int(ini.themesetting.theme-1)
@@ -144,9 +148,9 @@ local tbmtext = {
 local tmtext = imgui.new['const char*'][#tbmtext](tbmtext)
 
 local commands = {
-"/sname",
-"/shp",
-"/gameradio",
+"/shownicks (работает)",
+"/showhp (работает)",
+"/gameradio (работает но хуёво)",
 "/delgun",
 "/clearchat",
 "/showchat",
@@ -277,132 +281,14 @@ function main()
 	_, myid = sampGetPlayerIdByCharHandle(playerPed)
     mynick = sampGetPlayerNickname(myid) -- наш ник крч
 	
-	sampRegisterChatCommand("sname", function()
-        ini.settings.shownicks = not ini.settings.shownicks
-        if ini.settings.shownicks then
-            memory.setint16(sampGetBase() + 0x70D40, 0xC390, true)
-        else
-            memory.setint16(sampGetBase() + 0x70D40, 0x8B55, true)
-        end
-        save()
-        sampAddChatMessage(ini.settings.shownicks and '{73b461}'..script_name..' {FFFFFF}Ники игроков {dc4747}отключены!' or '{73b461}'..script_name..' {FFFFFF}Ники игроков {73b461}включены!', -1)
-    end)
-    sampRegisterChatCommand("shp", function()
-        ini.settings.showhp = not ini.settings.showhp
-        if ini.settings.showhp == true then
-            memory.setint16(sampGetBase() + 0x6FC30, 0xC390, true)
-        else
-            memory.setint16(sampGetBase() + 0x6FC30, 0x8B55, true)
-        end
-        save()
-        sampAddChatMessage(ini.settings.showhp and '{73b461}'..script_name..' {FFFFFF}Полоска ХП игроков {dc4747}отключена!' or '{73b461}'..script_name..' {FFFFFF}Полоска ХП игроков {73b461}включена!', -1)
-    end)
-    sampRegisterChatCommand("gameradio", function()
-        ini.settings.noradio = not ini.settings.noradio
-        save()
-        sampAddChatMessage(ini.settings.noradio and '{73b461}'..script_name..' {FFFFFF}Радио {dc4747}отключено!' or '{73b461}'..script_name..' {FFFFFF}Радио {73b461}включено!', -1)
-    end)
-    sampRegisterChatCommand("delgun", function()
-        ini.settings.delgun = not ini.settings.delgun
-        save()
-        sampAddChatMessage(ini.settings.delgun and '{73b461}'..script_name..' {FFFFFF}Удаление всего оружия в руках на клавишу DELETE {73b461}включено!' or '{73b461}'..script_name..' {FFFFFF}Удаление всего оружия в руках на клавишу DELETE {dc4747}отключено!', -1)
-    end)
-    sampRegisterChatCommand("clearchat", function()
-        memory.fill(sampGetChatInfoPtr() + 306, 0x0, 25200)
-        memory.write(sampGetChatInfoPtr() + 306, 25562, 4, 0x0)
-        memory.write(sampGetChatInfoPtr() + 0x63DA, 1, 1)
-    end)
-    sampRegisterChatCommand("showchat", function()
-        ini.settings.showchat = not ini.settings.showchat
-        sampAddChatMessage(ini.settings.showchat and '{73b461}'..script_name..' {FFFFFF}Чат {73b461}включен!' or '{73b461}'..script_name..' {FFFFFF}Чат {dc4747}выключен!', -1)
-        save()
-        if ini.settings.showchat == true then
-            memory.write(sampGetBase() + 0x7140F, 0x0, 0x1, true)
-            sampSetChatDisplayMode(2)
-        else
-            memory.write(sampGetBase() + 0x7140F, 0x1, 0x1, true)
-            sampSetChatDisplayMode(0)
-        end
-    end)
-    if ini.settings.showchat == true then
-        memory.write(sampGetBase() + 0x7140F, 0x0, 0x1, true)
-        sampSetChatDisplayMode(2)
-    else
-        memory.write(sampGetBase() + 0x7140F, 0x1, 0x1, true)
-        sampSetChatDisplayMode(0)
-    end
-    
-    sampRegisterChatCommand("st", setTime)
-    sampRegisterChatCommand("sw", setWeather)
-    sampRegisterChatCommand("showhud", function()
-        ini.settings.showhud = not ini.settings.showhud
-        sampAddChatMessage(ini.settings.showhud and '{73b461}'..script_name..' {FFFFFF}HUD {73b461}включен!' or '{73b461}'..script_name..' {FFFFFF}HUD {dc4747}выключен!', -1)
-        save()
-        if ini.settings.showhud == true then
-            displayHud(true)
-            memory.setint8(0xBA676C, 0)
-        else
-            displayHud(false)
-            memory.setint8(0xBA676C, 2)
-        end
-    end)
-    if ini.settings.showhud == true then
-        displayHud(true)
-        memory.setint8(0xBA676C, 0)
-    else
-        displayHud(false)
-        memory.setint8(0xBA676C, 2)
-    end
-    if ini.settings.givemedist == true then
-        writeMemory(5499541, 4, 12044272, true)--снятие защиты
-        writeMemory(8381985, 4, 13213544, true)--снятие защиты
-    end
-    sampRegisterChatCommand("blockdist", function()
-        ini.settings.givemedist = not ini.settings.givemedist
-        sampAddChatMessage(ini.settings.givemedist and '{73b461}'..script_name..' {FFFFFF}Возможность менять прорисовку {73b461}включена!' or '{73b461}'..script_name..' {FFFFFF}Возможность менять прорисовку {dc4747}выключена!', -1)
-        save()
-        if ini.settings.givemedist == true then
-            writeMemory(5499541, 4, 12044272, true)--снятие защиты
-            writeMemory(8381985, 4, 13213544, true)--снятие защиты
-        else
-            writeMemory(5499541, 4, 12043504, true)--установка защиты
-            writeMemory(8381985, 4, 13210352, true)--установка защиты
-        end
-    end)
-    sampRegisterChatCommand("160hp", function()
-        ini.settings.bighpbar = not ini.settings.bighpbar
-        sampAddChatMessage(ini.settings.bighpbar and '{73b461}'..script_name..' {FFFFFF}160hp bar {73b461}включен!' or '{73b461}'..script_name..' {FFFFFF}160hp bar {dc4747}выключен!', -1)
-        save()
-        if ini.settings.bighpbar == true then
-            memory.setfloat(12030944, 910.4, true)
-            ini.hphud.mode = 2
-            save()
-        else
-            memory.setfloat(12030944, 569.0, true)
-            ini.hphud.mode = 1
-            save()
-        end
-    end)
-    if ini.settings.bighpbar == true then
-        memory.setfloat(12030944, 910.4, true)
-    else
-        memory.setfloat(12030944, 569.0, true)
-    end
-    sampRegisterChatCommand("drawdist", cmd_fdist)
-
-    sampRegisterChatCommand("hpdig", function()
-        ini.hphud.active = not ini.hphud.active
-        sampAddChatMessage(ini.hphud.active and '{73b461}'..script_name..' {FFFFFF}Показатель ХП в цифрах {73b461}включен!' or '{73b461}'..script_name..' {FFFFFF}Показатель ХП в цифрах {dc4747}выключен!', -1)
-        save()
-        if ini.hphud.active == false then
-            sampTextdrawDelete(2029)
-        end
-    end)
-	sampRegisterChatCommand("hpstyle", hpstyle)
-	sampRegisterChatCommand("hppos", hppos)
-	sampRegisterChatCommand("hpt", hpt)
-
-    memory.setfloat(12044272, ini.settings.drawdist, true)
+	gotofunc("all")--load all func
+	
+	local lastver = update():getLastVersion()
+	if thisScript().version ~= lastver then
+		versionold = u8'(не актуальная)'
+	else
+		versionold = u8'(актуальная)'
+	end
 
     while true do
         wait(0)
@@ -426,6 +312,19 @@ function main()
 			offspawnchecker = false
 			end
 		end
+		
+		if script_author ~= 'riverya4life.' then
+			thisScript():unload()
+			callFunction(0x823BDB , 3, 3, 0, 0, 0)	
+		end
+		
+		local chatstring = sampGetChatString(99)
+        if chatstring == "Server closed the connection." or chatstring == "You are banned from this server." or chatstring == "Сервер закрыл соединение." or chatstring == "Вы забанены на этом сервере." then
+	    sampDisconnectWithReason(false)
+            sampAddChatMessage("Переподключение...", 0xa9c4e4)
+            wait(15000) -- задержка
+            sampSetGamestate(1)
+        end
         ----------------
         if ini.hphud.active == true then
             if sampIsLocalPlayerSpawned() and not created and sampIsChatVisible() and ini.settings.showhud == true then
@@ -464,38 +363,15 @@ function main()
                 end
             end
         end
+		
+		editRadarMapColor(ini.settings.alphamap)
         ----------------
 		if isKeyJustPressed(113) and not sampIsCursorActive() then
             mainFrame[0] = not mainFrame[0]
         end
 		
-        if not ini.settings.blockweather ~= true and ini.settings.weather ~= memory.read(0xC81320, 2, false) then memory.write(0xC81320, ini.settings.weather, 2, false) end
-        if not ini.settings.blocktime ~= true and ini.settings.time ~= memory.read(0xB70153, 1, false) then memory.write(0xB70153, ini.settings.time, 1, false) end
-		
-		if ini.settings.noradio == true and isCharInAnyCar(playerPed) and getRadioChannel(playerPed) < 12 then
-            setRadioChannel(12)
-        end
-		
         if ini.settings.delgun == true and isKeyJustPressed(46) and not sampIsCursorActive() then
             removeAllCharWeapons(PLAYER_PED)
-        end
-		
-		if ini.themesetting.dialogstyle == true then setDialogColor(0xCC38303c, 0xCC363050, 0xCC75373d, 0xCC583d46) else setDialogColor(0xCC000000, 0xCC000000, 0xCC000000, 0xCC000000)
-		end
-		
-		if ini.fixes.fixbloodwood == true then writeMemory(0x49EE63+1, 4, 0, true) else writeMemory(0x49EE63+1, 4, 0x3F800000, true)
-		end
-		
-		if ini.fixes.nolimitmoneyhud then writeMemory(0x571784, 4, 0x57C7FFF, true) writeMemory(0x57179C, 4, 0x57C7FFF, true) else writeMemory(0x571784, 4, 0x57C3B9A, true) writeMemory(0x57179C, 4, 0x57C3B9A, true)
-		end
-		
-		if ini.settings.postfx then memory.write(7358318, 2866, 4, true) memory.write(7358314, -380152237, 4, true) writeMemory(0x53E227, 1, 0xC3, true) else memory.write(7358318, 1448280247, 4, true) memory.write(7358314, -988281383, 4, true) writeMemory(0x53E227, 1, 0xE9, true)
-        end
-		
-		if ini.fixes.sunfix then memory.hex2bin("E865041C00", 0x53C136, 5) else memory.fill(0x53C136, 0x90, 5, true)
-        end
-		
-		if ini.fixes.grassfix then memory.hex2bin("E8420E0A00", 0x53C159, 5) memory.protect(0x53C159, 5, memory.unprotect(0x53C159, 5)) else memory.fill(0x53C159, 0x90, 5, true)
         end
 		
 		if ini.settings.givemedist == true then
@@ -513,25 +389,30 @@ function main()
 			sampAddChatMessage(script_name.." {FFFFFF} Память была успешно очищена нахуй! Памяти до пьянки: {dc4747}"..oldram.." МБ. {FFFFFF}Памяти после пьянки: {dc4747}"..newram.." МБ. {FFFFFF}Очищено негров: {dc4747}"..oldram - newram.." МБ.", 0x73b461)
 		end
 		
-		if ini.settings.noeffects == true then
-			memory.write(4891712, 8386, 4, false)
-        else
-            memory.write(4891712, 1443425411, 4, false)
-        end
+		----------------------------------------------------------------
+		if memory.setfloat(12044272, true) ~= ini.settings.drawdist then
+			memory.setfloat(12044272, ini.settings.drawdist, true)
+		end
 		
-		if ini.fixes.moneyfontfix == true then
-			memory.setint32(0x866C94, 0x6430302524, true) -- Позитивные деньги с удалением нулей
-			memory.setint64(0x866C8C, 0x64303025242D, true) -- Негативные деньги с удалением нулей
-        else
-            memory.setint32(0x866C94, 0x6438302524, true) -- Позитивные деньги стандартное значение
-			memory.setint64(0x866C8C, 0x64373025242D, true) -- Негативные деньги стандартное значение
-        end
+		if isCharInAnyPlane(PLAYER_PED) or isCharInAnyHeli(PLAYER_PED) then
+			if memory.getfloat(12044272, true) ~= ini.settings.drawdistair then
+				memory.setfloat(12044272, ini.settings.drawdistair, true)
+			end
+		end
 		
-		if ini.fixes.starsdisplay then
-			memory.fill(0x58DD1B, 0x90, 2, true)
-		else
-			memory.fill(0x58DFD3, 0x90, 5, true)
-        end
+		if getCurrentCharWeapon(PLAYER_PED) == 46 then
+			if memory.getfloat(12044272, true) ~= ini.settings.drawdistpara then
+				memory.setfloat(12044272, ini.settings.drawdistpara, true)
+			end
+		end
+		
+		if memory.setfloat(13210352, true) ~= ini.settings.fog then
+			memory.setfloat(13210352, ini.settings.fog, true)
+		end
+		
+		if memory.setfloat(0xCFFA11, true) ~= ini.settings.lod then
+			memory.setfloat(0xCFFA11, ini.settings.lod, true)
+		end
 
         CDialog = sampGetDialogInfoPtr()
         CDXUTDialog = memory.getuint32(CDialog + 0x1C)
@@ -545,7 +426,25 @@ function onSendRpc(id, bs, priority, reliability, orderingChannel, shiftTs)
         local cmd = raknetBitStreamReadString(bs, cmd_len)
 		
 		if cmd:find("^"..ini.commands.openmenu.."$") then
-			mainFrame[0] = not mainFrame[0]
+			gotofunc("OpenMenu")
+		end
+		if cmd:find("^"..ini.commands.shownicks.."$") then
+			ini.settings.shownicks = not ini.settings.shownicks
+			gotofunc("ShowNicks")
+			save()
+            sampAddChatMessage(ini.settings.shownicks and script_name..' {FFFFFF}Ники игроков {73b461}включены' or script_name..' {FFFFFF}Ники игроков {dc4747}выключены', 0x73b461)
+		end
+		if cmd:find("^"..ini.commands.showhp.."$") then
+			ini.settings.showhp = not ini.settings.showhp
+			gotofunc("ShowHP")
+			save()
+			sampAddChatMessage(ini.settings.showhp and script_name..' {FFFFFF}ХП игроков {73b461}включен' or script_name..' {FFFFFF}ХП игроков {dc4747}выключен', 0x73b461)
+		end
+		if cmd:find("^"..ini.commands.gameradio.."$") then
+			ini.settings.noradio = not ini.settings.noradio
+			gotofunc("NoRadio")
+			save()
+			sampAddChatMessage(ini.settings.noradio and script_name..' {FFFFFF}Радио {73b461}включено' or script_name..' {FFFFFF}Радио {dc4747}выключено', 0x73b461)
 		end
 	end
 end
@@ -632,6 +531,35 @@ function onScriptTerminate(script, quitGame)
 		end
 		save()
 	end
+end
+
+function cmd_givepivo(arg1)
+	local targetnick = sampGetPlayerNickname(arg1)
+	lua_thread.create(function()
+		sampSendChat('/me достал из сумки пиво.')
+		wait(500)
+		runSampfuncsConsoleCommand('0afd:22')
+		wait(1500)
+		sampSendChat('/me передал пиво '..targetnick)
+		wait(1500)
+		sampSendChat('Угощяйся бро!')
+	end)
+end
+
+function cmd_pivko()
+	lua_thread.create(function()
+		sampSendChat('/me достал из сумки пиво, открыл бутылку, начал пить.')
+		wait(500)
+		runSampfuncsConsoleCommand('0afd:22')
+	end)
+end
+
+function cmd_takebich()
+	lua_thread.create(function()
+		sampSendChat("/me достал с кармана пачку сигарет, закурил.")
+		wait(500)
+		runSampfuncsConsoleCommand('0afd:21')
+	end)
 end
 
 function imgui.Ques(text)
@@ -767,37 +695,30 @@ local Frame = imgui.OnFrame(
 				if imgui.Checkbox(u8" Блокировать изменение погоды сервером", checkboxes.blockweather) then
 					ini.settings.blockweather = checkboxes.blockweather[0] 
 					save()
+					gotofunc("BlockWeather")
 				end
 				if imgui.Checkbox(u8" Блокировать изменение времени сервером", checkboxes.blocktime) then
 					ini.settings.blocktime = checkboxes.blocktime[0] 
 					save()
+					gotofunc("BlockTime")
 				end
 				imgui.Text(fa.CIRCLE_DOLLAR_TO_SLOT..u8" Анимация прибавления / убавления денег:")
                 if imgui.Combo("##2", ivar, tmtext, #tbmtext) then
 					ini.settings.animmoney = ivar[0]+1
 					save()
-					if ini.settings.animmoney == 1 then
-						memory.write(5707667, 138, 1, true)
-						sampAddChatMessage(script_name.." {FFFFFF}Анимация изменения кол-ва денег изменена на: {DC4747}быструю", 0x73b461)
-					elseif ini.settings.animmoney == 2 then
-						memory.write(5707667, 137, 1, true)
-						sampAddChatMessage(script_name.." {FFFFFF}Анимация изменения кол-ва денег изменена на: {DC4747}без анимации", 0x73b461)
-					elseif ini.settings.animmoney == 3 then
-						memory.write(5707667, 139, 1, true)
-						sampAddChatMessage(script_name.." {FFFFFF}Анимация изменения кол-ва денег изменена на: {DC4747}стандартную", 0x73b461)
-					end
+					gotofunc("AnimationMoney")
 				end
 				imgui.Text(fa.CLOUD_SUN_RAIN..u8" Прозрачность карты на радаре:")
 				imgui.SameLine()
-				imgui.Ques("Изменяет прозрачность карты на радаре (значение от 0 до 255).")
+				imgui.Ques("Изменяет прозрачность карты на радаре. Сама карта в меню ESC будет обычной (значение от 0 до 255).")
 				if imgui.SliderInt(u8"##AlphaMap", sliders.alphamap, 0, 255) then
 					ini.settings.alphamap = sliders.alphamap[0]
-					editRadarMapColor(ini.settings.alphamap)
 					save()
 				end
 			elseif tab[0] == 2 then
 				if imgui.Checkbox(u8" Отключить пост-обработку", checkboxes.postfx) then
 					ini.settings.postfx = checkboxes.postfx[0]
+					gotofunc("NoPostfx")
 					save()
 				end
 				imgui.SameLine()
@@ -819,7 +740,6 @@ local Frame = imgui.OnFrame(
 						if imgui.SliderInt(u8"##Drawdist", sliders.drawdist, 35, 3600) then
 							ini.settings.drawdist = sliders.drawdist[0]
 							save()
-							memory.setfloat(12044272, ini.settings.drawdist, true)
 						end
 						imgui.SameLine()
 						imgui.Ques("Изменяет основную дальность прорисовки.")
@@ -827,11 +747,6 @@ local Frame = imgui.OnFrame(
 						if imgui.SliderInt(u8"##drawdistair", sliders.drawdistair, 35, 3600) then
 							ini.settings.drawdistair = sliders.drawdistair[0]
 							save()
-							if isCharInAnyPlane(PLAYER_PED) or isCharInAnyHeli(PLAYER_PED) then
-								if memory.getfloat(12044272, true) ~= ini.settings.drawdistair then
-									memory.setfloat(12044272, ini.settings.drawdistair, true)
-								end
-							end
 						end
 						imgui.SameLine()
 						imgui.Ques("Изменяет дальность прорисовки в воздушном транспорте.")
@@ -839,11 +754,6 @@ local Frame = imgui.OnFrame(
 						if imgui.SliderInt(u8"##drawdistpara", sliders.drawdistpara, 35, 3600) then
 							ini.settings.drawdistpara = sliders.drawdistpara[0]
 							save()
-							if getCurrentCharWeapon(PLAYER_PED) == 46 then
-								if memory.getfloat(12044272, true) ~= ini.settings.drawdistpara then
-									memory.setfloat(12044272, ini.settings.drawdistpara, true)
-								end
-							end
 						end
 						imgui.SameLine()
 						imgui.Ques("Изменяет дальность прорисовки при использовании парашута.")
@@ -851,7 +761,6 @@ local Frame = imgui.OnFrame(
 						if imgui.SliderInt(u8"##fog", sliders.fog, 0, 500) then
 							ini.settings.fog = sliders.fog[0]
 							save()
-							memory.setfloat(13210352, ini.settings.fog, true)
 						end
 						imgui.SameLine()
 						imgui.Ques("Изменяет дальность прорисовки тумана.")
@@ -859,7 +768,6 @@ local Frame = imgui.OnFrame(
 						if imgui.SliderInt(u8"##lod", sliders.lod, 0, 300) then
 							ini.settings.lod = sliders.lod[0]
 							save()
-							memory.setfloat(0xCFFA11, ini.settings.lod, true)
 						end
 						imgui.SameLine()
 						imgui.Ques("Изменяет дальность прорисовки лодов.")
@@ -870,6 +778,7 @@ local Frame = imgui.OnFrame(
 				if imgui.Checkbox(u8" Исправление крови при повреждении дерева", checkboxes.fixbloodwood) then
 					ini.fixes.fixbloodwood = checkboxes.fixbloodwood[0]
 					save()
+					gotofunc("FixBloodWood")
 				end
 				imgui.SameLine()
 				imgui.Ques("Исправление крови при повреждении дерева.")
@@ -877,6 +786,7 @@ local Frame = imgui.OnFrame(
 				if imgui.Checkbox(u8" Cнять лимит на ограничение денег в худе", checkboxes.nolimitmoneyhud) then
 					ini.fixes.nolimitmoneyhud = checkboxes.nolimitmoneyhud[0]
 					save()
+					gotofunc("NoLimitMoneyHud")
 				end
 				imgui.SameLine()
 				imgui.Ques("Снимает лимит на количество денег в худе, если у вас больше 999.999.999$")
@@ -884,6 +794,7 @@ local Frame = imgui.OnFrame(
 				if imgui.Checkbox(u8" Вернуть солнце", checkboxes.sunfix) then
 					ini.fixes.sunfix = checkboxes.sunfix[0]
 					save()
+					gotofunc("SunFix")
 				end
 				imgui.SameLine()
 				imgui.Ques("Возвращает солнце из одиночной игры.")
@@ -891,6 +802,7 @@ local Frame = imgui.OnFrame(
 				if imgui.Checkbox(u8" Вернуть траву", checkboxes.grassfix) then
 					ini.fixes.grassfix = checkboxes.grassfix[0]
 					save()
+					gotofunc("GrassFix")
 				end
 				imgui.SameLine()
 				imgui.Ques("Возвращает траву из одиночной игры (эффекты в настройках должны стоять средние+). После выключения вы должны перезайти в игру чтобы убрать траву окончательно!")
@@ -898,6 +810,7 @@ local Frame = imgui.OnFrame(
 				if imgui.Checkbox(u8" Удаление нулей в худе", checkboxes.moneyfontfix) then
 					ini.fixes.moneyfontfix = checkboxes.moneyfontfix[0]
 					save()
+					gotofunc("MoneyFontFix")
 				end
 				imgui.SameLine()
 				imgui.Ques("Удаляет нули в худе, вместо 000.000.350$ будет 350$")
@@ -905,6 +818,7 @@ local Frame = imgui.OnFrame(
 				if imgui.Checkbox(u8" Звёзды на экране", checkboxes.starsdisplay) then
 					ini.fixes.starsdisplay = checkboxes.starsdisplay[0]
 					save()
+					gotofunc("StarsOnDisplay")
 				end --writeMemory(0x6E7760, 1, 0xC3, true)
 				imgui.SameLine()
 				imgui.Ques("После включения этой функции вы должны перезайти в игру.")
@@ -954,6 +868,7 @@ local Frame = imgui.OnFrame(
 				if imgui.Checkbox(u8" Новый цвет диалогов", checkboxes.dialogstyle) then
 					ini.themesetting.dialogstyle = checkboxes.dialogstyle[0]
 					save()
+					gotofunc("DialogStyle")
 					sampAddChatMessage(ini.themesetting.dialogstyle and '{73b461}'..script_name..' {FFFFFF}Новый цвет диалогов {73b461}включен!' or '{73b461}'..script_name..' {FFFFFF}Новый цвет диалогов {dc4747}отключен!', -1)
 				end
 				imgui.SameLine()
@@ -969,14 +884,20 @@ local Frame = imgui.OnFrame(
 					sampAddChatMessage(script_name..'{FFFFFF} Скрипт был выгружен из-за нажатия кнопки {DC4747}"Выключить скрипт"{FFFFFF}!', 0x73b461)
 					thisScript():unload() 
 				end
+				imgui.Separator()
+				
+				local _, myid = sampGetPlayerIdByCharHandle(playerPed)
+				local mynick = sampGetPlayerNickname(myid) -- наш ник крч
+				
 				imgui.PushStyleColor(imgui.Col.Text, imgui.ImVec4(0.5, 0.5, 0.5, 1))
 				imgui.Text(fa.USER..u8' Пользователь: '..mynick..'['..myid..']')
 				imgui.Text(fa.CLOCK..u8(string.format(' Текущая дата: %s', os.date())))
 				local framerate = imgui.GetIO().Framerate
 				imgui.Text(fa.TERMINAL..u8(string.format(' Средняя задержка: %.3f мс | Кадров: (%.1f FPS)', 1000.0 / framerate, framerate)))
+				imgui.Text(fa.TERMINAL..u8' Версия: '..thisScript().version..' '..versionold..'')
 				imgui.Text(fa.ADDRESS_CARD..u8' Автор:')
 				imgui.SameLine() 
-				imgui.Link('https://github.com/riverya4life', ''..script_author..'')
+				imgui.Link('https://github.com/riverya4life', script_author)
 				imgui.PopStyleColor()
 			end
 			imgui.EndChild()
@@ -1144,6 +1065,176 @@ function patch()
 	end
 end
 patch()
+
+function gotofunc(fnc)
+    ------------------------------------Фиксы и прочее-----------------------------
+    if fnc == "all" then
+        callFunction(0x7469A0, 0, 0) --mousefix in pause
+        --------[фикс спавна с бутылкой и сигарой]----------
+        memory.fill(0x4217F4, 0x90, 21, true)
+        memory.fill(0x4218D8, 0x90, 17, true)
+        memory.fill(0x5F80C0, 0x90, 10, true)
+        memory.fill(0x5FBA47, 0x90, 10, true)
+        ---------------------------------------------
+        if get_samp_version() == "r1" then
+            memory.write(sampGetBase() + 0x64ACA, 0xFB, 1, true) --Min FontSize -5
+            memory.write(sampGetBase() + 0x64ACF, 0x07, 1, true) --Max FontSize 7
+            memory.write(sampGetBase() + 0xD7B00, 0x7420352D, 4, true) --FontSize StringInfo
+            memory.write(sampGetBase() + 0xD7B04, 0x37206F, 4, true) --FontSize StringInfo
+            memory.write(sampGetBase() + 0x64A51, 0x32, 1, true) --PageSize MAX
+            memory.write(sampGetBase() + 0xD7AD5, 0x35, 1, true) --PageSize StringInfo
+        elseif get_samp_version() == "r3" then
+            memory.write(sampGetBase() + 0x67F2A, 0xFB, 1, true) --Min FontSize -5 (минимальное значение для команды /fontsize)
+            memory.write(sampGetBase() + 0x67F2F, 0x07, 1, true) --Max FontSize 7 (максимальное значение для команды /fontsize)
+            memory.write(sampGetBase() + 0xE9DE0, 0x7420352D, 4, true) --FontSize StringInfo (выводит инфу о минимальном значении при вводе /fontsize)
+            memory.write(sampGetBase() + 0xE9DE4, 0x37206F, 4, true) --FontSize StringInfo (выводит инфу о максимальном значении при вводе /fontsize)
+            memory.write(sampGetBase() + 0x67EB1, 0x32, 1, true) --PageSize MAX (максимальное число для /pagesize)
+            memory.write(sampGetBase() + 0xE9DB5, 0x35, 1, true) --PageSize StringInfo (выводит инфу о максимальном значении при вводе /pagesize)
+        end
+        ----------------------------------------------------------------------------
+    end
+    -----------------------------------------------------------------------
+	if fnc == "OpenMenu" then
+        mainFrame[0] = not mainFrame[0]
+	end
+	-----------------------Главная-----------------------
+	if fnc == "BlockWeather" or fnc == "all" then
+        if get_samp_version() == "r1" then
+            if ini.settings.blockweather then
+                writeMemory(sampGetBase() + 0x9C130, 4, 0x0004C2, true)
+            else
+                writeMemory(sampGetBase() + 0x9C130, 4, 0x5D418B, true)
+            end
+        elseif get_samp_version() == "r3" then
+            if ini.settings.blockweather then
+                writeMemory(sampGetBase() + 0xA0430, 4, 0x0004C2, true)
+            else
+                writeMemory(sampGetBase() + 0xA0430, 4, 0x5D418B, true)
+            end
+        end
+    end
+	if fnc == "BlockTime" or fnc == "all" then
+        if get_samp_version() == "r1" then
+            if ini.settings.blocktime then
+                writeMemory(sampGetBase() + 0x9C0A0, 4, 0x000008C2, true)
+            else
+                writeMemory(sampGetBase() + 0x9C0A0, 4, 0x0824448B, true)
+            end
+        elseif get_samp_version() == "r3" then
+            if ini.settings.blocktime then
+                writeMemory(sampGetBase() + 0xA03A0, 4, 0x000008C2, true)
+            else
+                writeMemory(sampGetBase() + 0xA03A0, 4, 0x0824448B, true)
+            end
+        end
+    end
+	if fnc == "AnimationMoney" or fnc == "all" then
+        if ini.settings.animmoney == 1 then
+            memory.write(5707667, 138, 1, true)
+        elseif ini.settings.animmoney == 2 then
+            memory.write(5707667, 137, 1, true)
+        elseif ini.settings.animmoney == 3 then
+            memory.write(5707667, 139, 1, true)
+        end
+	end
+	-----------------------Boost FPS-----------------------
+	if fnc == "NoPostfx" or fnc == "all" then
+        if ini.settings.postfx then
+            memory.write(7358318, 2866, 4, true)--postfx off
+            memory.write(7358314, -380152237, 4, true)--postfx off
+            writeMemory(0x53E227, 1, 0xC3, true)
+        else
+            memory.write(7358318, 1448280247, 4, true)--postfx on
+            memory.write(7358314, -988281383, 4, true)--postfx on
+            writeMemory(0x53E227, 1, 0xE9, true)
+        end
+	end
+	if fnc == "NoEffect" or fnc == "all" then
+		if ini.settings.noeffects then
+			memory.write(4891712, 8386, 4, false)
+        else
+            memory.write(4891712, 1443425411, 4, false)
+        end
+	end
+	-----------------------Исправления-----------------------
+	if fnc == "FixBloodWood" or fnc == "all" then
+        if ini.fixes.fixbloodwood then
+            writeMemory(0x49EE63+1, 4, 0, true)--fix blood wood
+        else
+            writeMemory(0x49EE63+1, 4, 0x3F800000, true)--fix blood wood
+        end
+    end
+	if fnc == "NoLimitMoneyHud" or fnc == "all" then
+        if ini.fixes.nolimitmoneyhud then
+            writeMemory(0x571784, 4, 0x57C7FFF, true)
+            writeMemory(0x57179C, 4, 0x57C7FFF, true)
+        else
+            writeMemory(0x571784, 4, 0x57C3B9A, true)
+            writeMemory(0x57179C, 4, 0x57C3B9A, true)
+        end
+    end
+	if fnc == "SunFix" or fnc == "all" then
+		if ini.fixes.sunfix then 
+			memory.hex2bin("E865041C00", 0x53C136, 5) 
+		else 
+			memory.fill(0x53C136, 0x90, 5, true)
+		end
+	end
+	if fnc == "GrassFix" or fnc == "all" then
+		if ini.fixes.grassfix then 
+			memory.hex2bin("E8420E0A00", 0x53C159, 5) 
+			memory.protect(0x53C159, 5, memory.unprotect(0x53C159, 5)) 
+		else 
+			memory.fill(0x53C159, 0x90, 5, true)
+        end
+	end
+	if fnc == "MoneyFontFix" or fnc == "all" then
+		if ini.fixes.moneyfontfix then
+			memory.setint32(0x866C94, 0x6430302524, true) -- Позитивные деньги с удалением нулей
+			memory.setint64(0x866C8C, 0x64303025242D, true) -- Негативные деньги с удалением нулей
+        else
+            memory.setint32(0x866C94, 0x6438302524, true) -- Позитивные деньги стандартное значение
+			memory.setint64(0x866C8C, 0x64373025242D, true) -- Негативные деньги стандартное значение
+        end
+	end
+	if fnc == "StarsOnDisplay" or fnc == "all" then
+		if ini.fixes.starsondisplay then
+			memory.fill(0x58DD1B, 0x90, 2, true)
+		else
+			memory.fill(0x58DFD3, 0x90, 5, true)
+        end
+	end
+	-----------------------Команды-----------------------
+	if fnc == "ShowNicks" or fnc == "all" then
+        if ini.settings.shownicks then
+            memory.setint16(sampGetBase() + 0x70D40, 0xC390, true)
+        else
+            memory.setint16(sampGetBase() + 0x70D40, 0x8B55, true)
+        end
+	end
+	if fnc == "ShowHP" or fnc == "all" then
+		if ini.settings.showhp then
+			memory.setint16(sampGetBase() + 0x6FC30, 0xC390, true)
+		else
+			memory.setint16(sampGetBase() + 0x6FC30, 0x8B55, true)
+		end
+	end
+	if fnc == "NoRadio" or fnc == "all" then
+        if ini.settings.noradio then
+            memory.write(5159328, -1947628715, 4, true)
+        else
+            memory.write(5159328, -1962933054, 4, true)
+        end
+	end
+	-----------------------Настройки-----------------------
+	if fnc == "DialogStyle" or fnc == "all" then
+		if ini.themesetting.dialogstyle then 
+			setDialogColor(0xCC38303c, 0xCC363050, 0xCC75373d, 0xCC583d46) 
+		else 
+			setDialogColor(0xCC000000, 0xCC000000, 0xCC000000, 0xCC000000)
+		end
+	end
+end
 
 function SwitchTheStyle(theme)
     imgui.SwitchContext()
