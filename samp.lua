@@ -43,6 +43,9 @@ local ini = inicfg.load(inicfg.load({
 		animmoney = 3,
 		noeffects = false,
 		alphamap = 255,
+        separate_msg = false,
+        vsync = false,
+		recolorer = false,
     },
     hphud = {
         active = false,
@@ -58,6 +61,10 @@ local ini = inicfg.load(inicfg.load({
 		grassfix = false,
 		moneyfontfix = false,
 		starsondisplay = false,
+        antiblockedplayer = true,
+        sensfix = true,
+        fixblackroads = true,
+        longarmfix = false,
 	},
 	themesetting = {
 		theme = 6,
@@ -66,13 +73,22 @@ local ini = inicfg.load(inicfg.load({
 		roundedmenu = 4.0,
 		dialogstyle = false,
 	},
+    cleaner = {
+        limit = 512,
+        autoclean = true,
+        cleaninfo = true,
+    },
 	commands = {
 		openmenu = "/riverya",	
 		animmoney = "/animmoney",
 		shownicks = "/shownicks",
 		showhp = "/showhp",
 		gameradio = "/gameradio",
-	}
+		delgun = "/delgun",
+		clearchat = "/clearchat",
+		showchat = "/showchat",
+		arzdialog = "/arzdialog",
+	},
 }, directIni))
 inicfg.save(ini, directIni)
 
@@ -88,71 +104,86 @@ local CDialog, CDXUTDialog = 0, 0
 -- Остальное
 local onspawned = false
 local offspawnchecker = true
+local bscreen = false
+local showtextdraw = false
+local commands = {'clear', 'threads', 'chatcmds'}
 local MAX_SAMP_MARKERS = 63
 local CVehicle_DoSunGlare = ffi.cast("void (__thiscall*)(unsigned int)", 0x6DD6F0)
+local new, str, sizeof = imgui.new, ffi.string, ffi.sizeof
 
 ---------------------------------------------------------
-local mainFrame = imgui.new.bool(false)
+local mainFrame = new.bool(false)
 
 local sw, sh = getScreenResolution()
 
 local sliders = {
-	weather = imgui.new.int(ini.settings.weather),
-	time = imgui.new.int(ini.settings.time),
-	roundtheme = imgui.new.float(ini.themesetting.rounded),
-	roundthemecomp = imgui.new.float(ini.themesetting.roundedcomp),
-	roundthememenu = imgui.new.float(ini.themesetting.roundedmenu),
-	drawdist = imgui.new.int(ini.settings.drawdist),
-    drawdistair = imgui.new.int(ini.settings.drawdistair),
-    drawdistpara = imgui.new.int(ini.settings.drawdistpara),
-    fog = imgui.new.int(ini.settings.fog),
-    lod = imgui.new.int(ini.settings.lod),
-	alphamap = imgui.new.int(ini.settings.alphamap),
+	weather = new.int(ini.settings.weather),
+	time = new.int(ini.settings.time),
+	roundtheme = new.float(ini.themesetting.rounded),
+	roundthemecomp = new.float(ini.themesetting.roundedcomp),
+	roundthememenu = new.float(ini.themesetting.roundedmenu),
+	drawdist = new.int(ini.settings.drawdist),
+    drawdistair = new.int(ini.settings.drawdistair),
+    drawdistpara = new.int(ini.settings.drawdistpara),
+    fog = new.int(ini.settings.fog),
+    lod = new.int(ini.settings.lod),
+	alphamap = new.int(ini.settings.alphamap),
+    ------------------------------------------------
+    limitmem = new.int(ini.cleaner.limit),
 }
 
 local checkboxes = {
-	blockweather = imgui.new.bool(ini.settings.blockweather),
-	blocktime = imgui.new.bool(ini.settings.blocktime),
-	givemedist = imgui.new.bool(ini.settings.givemedist),
-	fixbloodwood = imgui.new.bool(ini.fixes.fixbloodwood),
-	nolimitmoneyhud = imgui.new.bool(ini.fixes.nolimitmoneyhud),
-	sunfix = imgui.new.bool(ini.fixes.sunfix),
-	grassfix = imgui.new.bool(ini.fixes.grassfix),
-	postfx = imgui.new.bool(ini.settings.postfx),
-	dialogstyle = imgui.new.bool(ini.themesetting.dialogstyle),
-	noeffects = imgui.new.bool(ini.settings.noeffects),
-	moneyfontfix = imgui.new.bool(ini.fixes.moneyfontfix),
-	starsdisplay = imgui.new.bool(ini.fixes.starsdisplay),
+	blockweather = new.bool(ini.settings.blockweather),
+	blocktime = new.bool(ini.settings.blocktime),
+	givemedist = new.bool(ini.settings.givemedist),
+	fixbloodwood = new.bool(ini.fixes.fixbloodwood),
+	nolimitmoneyhud = new.bool(ini.fixes.nolimitmoneyhud),
+	sunfix = new.bool(ini.fixes.sunfix),
+	grassfix = new.bool(ini.fixes.grassfix),
+	postfx = new.bool(ini.settings.postfx),
+	dialogstyle = new.bool(ini.themesetting.dialogstyle),
+	noeffects = new.bool(ini.settings.noeffects),
+	moneyfontfix = new.bool(ini.fixes.moneyfontfix),
+	starsondisplay = new.bool(ini.fixes.starsondisplay),
+    antiblockedplayer = new.bool(ini.fixes.antiblockedplayer),
+    sensfix = new.bool(ini.fixes.sensfix),
+    fixblackroads = new.bool(ini.fixes.fixblackroads),
+    longarmfix = new.bool(ini.fixes.longarmfix),
+    vsync = new.bool(ini.settings.vsync),
+	recolorer = new.bool(ini.settings.recolorer),
+    --------------------------------------------------
+    cleaninfo = new.bool(ini.cleaner.cleaninfo),
+    autoclean = new.bool(ini.cleaner.autoclean),
 }
 
 local buffers = {
-	cmd_openmenu = imgui.new.char[64](ini.commands.openmenu),
-	cmd_animmoney = imgui.new.char[64](ini.commands.animmoney),
-	cmd_shownicks = imgui.new.char[64](ini.commands.shownicks),
+	cmd_openmenu = new.char[64](ini.commands.openmenu),
+	cmd_animmoney = new.char[64](ini.commands.animmoney),
+	cmd_shownicks = new.char[64](ini.commands.shownicks),
 }
 
-local int_item = imgui.new.int(ini.themesetting.theme-1)
+local int_item = new.int(ini.themesetting.theme-1)
 local item_list = {u8"Синяя", u8"Красная", u8"Коричневая", u8"Аква", u8"Черная", u8"Фиолетовая", u8"Черно-оранжевая", u8"Серая", u8"Вишневая", u8"Зеленая", u8"Пурпурная", u8"Темно-зеленая", u8"Оранжевая"}
-local ImItems = imgui.new['const char*'][#item_list](item_list)
+local ImItems = new['const char*'][#item_list](item_list)
 
-local tab = imgui.new.int(1)
-local tabs = {fa.HOUSE..u8' Главная', fa.PLUS..u8' Boost FPS', fa.GEARS..u8' Исправления', fa.BOOK..u8' Команды', fa.GEARS..u8' Настройки',
+local tab = new.int(1)
+local tabs = {fa.HOUSE..u8' Главная', fa.DESKTOP..u8' Boost FPS', fa.GEAR..u8' Исправления', fa.GAMEPAD..u8' Прочее', fa.BARS..u8' Настройки',
 }
 
-local ivar = imgui.new.int(ini.settings.animmoney-1)
+local ivar = new.int(ini.settings.animmoney-1)
 local tbmtext = {
     u8"Быстрая",
     u8"Без анимации",
     u8"Стандартная",
 }
-local tmtext = imgui.new['const char*'][#tbmtext](tbmtext)
+local tmtext = new['const char*'][#tbmtext](tbmtext)
 
 local commands = {
 "/shownicks (работает)",
 "/showhp (работает)",
 "/gameradio (работает но хуёво)",
-"/delgun",
-"/clearchat",
+"/delgun (не работает)",
+"/clearchat (работает)",
 "/showchat",
 "/showhud",
 "/st",
@@ -164,6 +195,7 @@ local commands = {
 "/hppos",
 "/hpstyle",
 "/hpt",
+"/arzdialog",
 }
 
 local texincommands = {
@@ -183,9 +215,12 @@ local texincommands = {
 "Изменить положение показателя ХП в цифрах",
 "Изменить стиль показателя ХП в цифрах",
 "Отображать надпись \"hp\" рядом с цифрами в ХП худе",
+"Изменяет цвет диалогов как на лаунчере Arizona RP",
 }
 
 local created = false
+bi = false
+antiafk = false
 
 ------------------------------------ [Клинер ёбаный блять] --------------------------------------------
 local function round(num, idp)
@@ -289,6 +324,10 @@ function main()
 	else
 		versionold = u8'(актуальная)'
 	end
+	
+	for i = 1, #commands do
+    	runSampfuncsConsoleCommand(commands[i])
+	end
 
     while true do
         wait(0)
@@ -363,15 +402,18 @@ function main()
                 end
             end
         end
-		
-		editRadarMapColor(ini.settings.alphamap)
         ----------------
 		if isKeyJustPressed(113) and not sampIsCursorActive() then
             mainFrame[0] = not mainFrame[0]
         end
-		
-        if ini.settings.delgun == true and isKeyJustPressed(46) and not sampIsCursorActive() then
-            removeAllCharWeapons(PLAYER_PED)
+
+        if not ini.settings.blocktime ~= true and ini.settings.time ~= memory.read(0xB70153, 1, false) then 
+            memory.write(0xB70153, ini.settings.time, 1, false)
+        end
+
+        if not ini.settings.blockweather ~= true and ini.settings.weather ~= memory.read(0xC81320, 2, false) then 
+            memory.write(0xC81320, ini.settings.weather, 2, false)
+            memory.write(0xC81318, ini.settings.weather, 2, false)
         end
 		
 		if ini.settings.givemedist == true then
@@ -382,37 +424,33 @@ function main()
 			memory.write(0x7FE621, 0xC992F0, 4, true)-- выкл
 		end
 		
-		if memory.read(0x8E4CB4, 4, true) > 838860800 then
-			local oldram = ("%d"):format(get_memory())
-			cleanStreamMemoryBuffer()
-			local newram = ("%d"):format(get_memory())
-			sampAddChatMessage(script_name.." {FFFFFF} Память была успешно очищена нахуй! Памяти до пьянки: {dc4747}"..oldram.." МБ. {FFFFFF}Памяти после пьянки: {dc4747}"..newram.." МБ. {FFFFFF}Очищено негров: {dc4747}"..oldram - newram.." МБ.", 0x73b461)
-		end
-		
-		----------------------------------------------------------------
 		if memory.setfloat(12044272, true) ~= ini.settings.drawdist then
 			memory.setfloat(12044272, ini.settings.drawdist, true)
 		end
-		
 		if isCharInAnyPlane(PLAYER_PED) or isCharInAnyHeli(PLAYER_PED) then
 			if memory.getfloat(12044272, true) ~= ini.settings.drawdistair then
 				memory.setfloat(12044272, ini.settings.drawdistair, true)
 			end
 		end
-		
 		if getCurrentCharWeapon(PLAYER_PED) == 46 then
 			if memory.getfloat(12044272, true) ~= ini.settings.drawdistpara then
 				memory.setfloat(12044272, ini.settings.drawdistpara, true)
 			end
 		end
-		
 		if memory.setfloat(13210352, true) ~= ini.settings.fog then
 			memory.setfloat(13210352, ini.settings.fog, true)
 		end
-		
 		if memory.setfloat(0xCFFA11, true) ~= ini.settings.lod then
 			memory.setfloat(0xCFFA11, ini.settings.lod, true)
 		end
+
+        if ini.cleaner.autoclean then
+            if tonumber(get_memory()) > tonumber(ini.cleaner.limit) then
+                gotofunc("CleanMemory")
+            end
+        end
+		
+		----------------------------------------------------------------
 
         CDialog = sampGetDialogInfoPtr()
         CDXUTDialog = memory.getuint32(CDialog + 0x1C)
@@ -445,6 +483,30 @@ function onSendRpc(id, bs, priority, reliability, orderingChannel, shiftTs)
 			gotofunc("NoRadio")
 			save()
 			sampAddChatMessage(ini.settings.noradio and script_name..' {FFFFFF}Радио {73b461}включено' or script_name..' {FFFFFF}Радио {dc4747}выключено', 0x73b461)
+		end
+		if cmd:find("^"..ini.commands.delgun.."$") then
+			ini.settings.delgun = not ini.settings.delgun
+			gotofunc("DelGun")
+			save()
+			sampAddChatMessage(ini.settings.delgun and '{73b461}'..script_name..' {FFFFFF}Удаление всего оружия в руках на клавишу DELETE {73b461}включено!' or '{73b461}'..script_name..' {FFFFFF}Удаление всего оружия в руках на клавишу DELETE {dc4747}отключено!', -1)
+		end
+		if cmd:find("^"..ini.commands.clearchat.."$") then
+			gotofunc("ClearChat")
+		end
+		
+		if cmd:find("^"..ini.commands.showchat.."$") then
+			ini.settings.showchat = not ini.settings.showchat
+			gotofunc("ShowChat")
+			save()
+			sampAddChatMessage(ini.settings.showchat and '{73b461}'..script_name..' {FFFFFF}Чат {73b461}включен!' or '{73b461}'..script_name..' {FFFFFF}Чат {dc4747}отключен!', -1)
+		end
+		
+		if cmd:find("^"..ini.commands.arzdialog.."$") then
+			ini.themesetting.dialogstyle = not ini.themesetting.dialogstyle
+			gotofunc("DialogStyle")
+			save()
+			checkboxes.dialogstyle[0] = ini.themesetting.dialogstyle
+			sampAddChatMessage(ini.themesetting.dialogstyle and '{73b461}'..script_name..' {FFFFFF}Новый цвет диалогов {73b461}включен!' or '{73b461}'..script_name..' {FFFFFF}Новый цвет диалогов {dc4747}отключен!', -1)
 		end
 	end
 end
@@ -562,118 +624,14 @@ function cmd_takebich()
 	end)
 end
 
-function imgui.Ques(text)
-    imgui.TextDisabled('(?)')
-    if imgui.IsItemHovered() then
-        imgui.BeginTooltip()
-        imgui.PushTextWrapPos(450)
-        imgui.TextUnformatted(u8(text))
-        imgui.PopTextWrapPos()
-        imgui.EndTooltip()
-    end
-end
-
-function imgui.NewInputText(lable, val, width, hint, hintpos)
-    local hint = hint and hint or ''
-    local hintpos = tonumber(hintpos) and tonumber(hintpos) or 1
-    local cPos = imgui.GetCursorPos()
-    imgui.PushItemWidth(width)
-    local result = imgui.InputText(lable, val, sizeof(val))
-    if #str(val) == 0 then
-        local hintSize = imgui.CalcTextSize(hint)
-        if hintpos == 2 then imgui.SameLine(cPos.x + (width - hintSize.x) / 2)
-        elseif hintpos == 3 then imgui.SameLine(cPos.x + (width - hintSize.x - 5))
-        else imgui.SameLine(cPos.x + 5) end
-        imgui.TextColored(imgui.ImVec4(1.00, 1.00, 1.00, 0.40), tostring(hint))
-    end
-    imgui.PopItemWidth()
-    return result
-end
-
-function imgui.Link(link,name,myfunc)
-	myfunc = type(name) == 'boolean' and name or myfunc or false
-	name = type(name) == 'string' and name or type(name) == 'boolean' and link or link
-	local size = imgui.CalcTextSize(name)
-	local p = imgui.GetCursorScreenPos()
-	local p2 = imgui.GetCursorPos()
-	local resultBtn = imgui.InvisibleButton('##'..link..name, size)
-	if resultBtn then
-		if not myfunc then
-		    os.execute('explorer '..link)
-		end
-	end
-	imgui.SetCursorPos(p2)
-	if imgui.IsItemHovered() then
-		imgui.TextColored(imgui.GetStyle().Colors[imgui.Col.ButtonHovered], name)
-	else
-		imgui.TextColored(imgui.GetStyle().Colors[imgui.Col.Button], name)
-	end
-	return resultBtn
-end
-
-imgui.OnInitialize(function()
-	imgui.GetIO().IniFilename = nil
-    local config = imgui.ImFontConfig()
-    config.MergeMode = true
-    config.PixelSnapH = true
-    iconRanges = imgui.new.ImWchar[3](fa.min_range, fa.max_range, 0)
-    imgui.GetIO().Fonts:AddFontFromMemoryCompressedBase85TTF(fa.get_font_data_base85('solid'), 14, config, iconRanges) -- solid - тип иконок, так же есть thin, regular, light и duotone
-	imgui.GetStyle().WindowTitleAlign = imgui.ImVec2(0.5, 0.5)
-	SwitchTheStyle(ini.themesetting.theme)
-end)
-
-function imgui.CustomMenu(labels, selected, size, speed, centering)
-    local bool = false
-    speed = speed and speed or 0.2
-    local radius = size.y * 0.50
-    local draw_list = imgui.GetWindowDrawList()
-    if LastActiveTime == nil then LastActiveTime = {} end
-    if LastActive == nil then LastActive = {} end
-    local function ImSaturate(f)
-        return f < 0.0 and 0.0 or (f > 1.0 and 1.0 or f)
-    end
-    for i, v in ipairs(labels) do
-        local c = imgui.GetCursorPos()
-        local p = imgui.GetCursorScreenPos()
-        if imgui.InvisibleButton(v..'##'..i, size) then
-            selected[0] = i
-            LastActiveTime[v] = os.clock()
-            LastActive[v] = true
-            bool = true
-        end
-        imgui.SetCursorPos(c)
-        local t = selected[0] == i and 1.0 or 0.0
-        if LastActive[v] then
-            local time = os.clock() - LastActiveTime[v]
-            if time <= 0.3 then
-                local t_anim = ImSaturate(time / speed)
-                t = selected[0] == i and t_anim or 1.0 - t_anim
-            else
-                LastActive[v] = false
-            end
-        end
-        local col_bg =  imgui.GetColorU32Vec4(selected[0] == i and imgui.GetStyle().Colors[imgui.Col.ButtonActive] or imgui.ImVec4(0,0,0,0))
-        local col_box =  imgui.GetColorU32Vec4(selected[0] == i and imgui.GetStyle().Colors[imgui.Col.Button] or imgui.ImVec4(0,0,0,0))
-        local col_hovered = imgui.GetStyle().Colors[imgui.Col.ButtonHovered]
-        local col_hovered =  imgui.GetColorU32Vec4(imgui.ImVec4(col_hovered.x, col_hovered.y, col_hovered.z, (imgui.IsItemHovered() and 0.2 or 0)))
-        draw_list:AddRectFilled(imgui.ImVec2(p.x-size.x/6, p.y), imgui.ImVec2(p.x + (radius * 0.65) + t * size.x, p.y + size.y), col_bg, ini.themesetting.roundedmenu)
-        draw_list:AddRectFilled(imgui.ImVec2(p.x-size.x/6, p.y), imgui.ImVec2(p.x + (radius * 0.65) + size.x, p.y + size.y), col_hovered, ini.themesetting.roundedmenu)
-        draw_list:AddRectFilled(imgui.ImVec2(p.x, p.y), imgui.ImVec2(p.x+5, p.y + size.y), col_box)
-        imgui.SetCursorPos(imgui.ImVec2(c.x+(centering and (size.x-imgui.CalcTextSize(v).x)/2 or 15), c.y+(size.y-imgui.CalcTextSize(v).y)/2))
-        imgui.Text(v)
-        imgui.SetCursorPos(imgui.ImVec2(c.x, c.y+size.y))
-    end
-    return bool
-end
-
 local Frame = imgui.OnFrame(
     function() return mainFrame[0] end,
     function(self)
         imgui.SetNextWindowSize(imgui.ImVec2(670, 325), imgui.Cond.FirstUseEver)
 		imgui.SetNextWindowPos(imgui.ImVec2((sw / 2), sh / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-		imgui.Begin(u8"SAMP++ by "..script_author.."", mainFrame, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize)
+		imgui.Begin(u8"SAMP++ by "..script_author.."", mainFrame, imgui.WindowFlags.NoResize)
 			imgui.SetCursorPos(imgui.ImVec2(-2, 25))
-			imgui.CustomMenu(tabs, tab, imgui.ImVec2(135, 50))
+			imgui.CustomMenu(tabs, tab, imgui.ImVec2(140, 50))
 
 			imgui.SetCursorPos(imgui.ImVec2(155, 25))
 			imgui.BeginChild('##main', imgui.ImVec2(-1, 293), true)
@@ -684,6 +642,7 @@ local Frame = imgui.OnFrame(
 				if imgui.SliderInt(u8"##Weather", sliders.weather, 0, 45) then
 					ini.settings.weather = sliders.weather[0] 
 					save()
+					gotofunc("SetWeather")
 				end
 				imgui.Text(fa.MOON..u8" Время:")
 				imgui.SameLine()
@@ -695,12 +654,11 @@ local Frame = imgui.OnFrame(
 				if imgui.Checkbox(u8" Блокировать изменение погоды сервером", checkboxes.blockweather) then
 					ini.settings.blockweather = checkboxes.blockweather[0] 
 					save()
-					gotofunc("BlockWeather")
 				end
 				if imgui.Checkbox(u8" Блокировать изменение времени сервером", checkboxes.blocktime) then
 					ini.settings.blocktime = checkboxes.blocktime[0] 
 					save()
-					gotofunc("BlockTime")
+					gotofunc("SetTime")
 				end
 				imgui.Text(fa.CIRCLE_DOLLAR_TO_SLOT..u8" Анимация прибавления / убавления денег:")
                 if imgui.Combo("##2", ivar, tmtext, #tbmtext) then
@@ -714,7 +672,16 @@ local Frame = imgui.OnFrame(
 				if imgui.SliderInt(u8"##AlphaMap", sliders.alphamap, 0, 255) then
 					ini.settings.alphamap = sliders.alphamap[0]
 					save()
+                    gotofunc("AlphaMap")
 				end
+
+                if imgui.Button(u8(ini.settings.vsync and 'Выключить' or 'Включить')..u8" вертикальную синхронизацию", imgui.ImVec2(330, 25)) then
+                    ini.settings.vsync = not ini.settings.vsync
+                    sampAddChatMessage(ini.settings.vsync and script_name..' {FFFFFF}Вертикальная синхронизация {73b461}включена' or script_name..' {FFFFFF}Вертикальная синхронизация {dc4747}выключена', 0x73b461)
+                    save()
+                    gotofunc("Vsync")
+                end
+
 			elseif tab[0] == 2 then
 				if imgui.Checkbox(u8" Отключить пост-обработку", checkboxes.postfx) then
 					ini.settings.postfx = checkboxes.postfx[0]
@@ -730,49 +697,68 @@ local Frame = imgui.OnFrame(
 				end
 				imgui.SameLine()
 				imgui.Ques("Отключает эффекты в игре, если у вас слабый пк.")
-				if imgui.Checkbox(u8" Включить возможность менять прорисовку", checkboxes.givemedist) then
-					ini.settings.givemedist = checkboxes.givemedist[0] 
-					save()
-				end
-				if ini.settings.givemedist then
-					if imgui.CollapsingHeader(fa.EYE..u8' Дальность прорисовки') then
-						imgui.Text(fa.EYE..u8" Основная дальность прорисовки:")
-						if imgui.SliderInt(u8"##Drawdist", sliders.drawdist, 35, 3600) then
-							ini.settings.drawdist = sliders.drawdist[0]
-							save()
-						end
-						imgui.SameLine()
-						imgui.Ques("Изменяет основную дальность прорисовки.")
-						imgui.Text(fa.PLANE_UP..u8" Дальность прорисовки в воздушном транспорте:")
-						if imgui.SliderInt(u8"##drawdistair", sliders.drawdistair, 35, 3600) then
-							ini.settings.drawdistair = sliders.drawdistair[0]
-							save()
-						end
-						imgui.SameLine()
-						imgui.Ques("Изменяет дальность прорисовки в воздушном транспорте.")
-						imgui.Text(fa.PARACHUTE_BOX..u8" Дальность прорисовки при использовании парашута:")
-						if imgui.SliderInt(u8"##drawdistpara", sliders.drawdistpara, 35, 3600) then
-							ini.settings.drawdistpara = sliders.drawdistpara[0]
-							save()
-						end
-						imgui.SameLine()
-						imgui.Ques("Изменяет дальность прорисовки при использовании парашута.")
-						imgui.Text(fa.SMOG..u8" Дальность прорисовки тумана:")
-						if imgui.SliderInt(u8"##fog", sliders.fog, 0, 500) then
-							ini.settings.fog = sliders.fog[0]
-							save()
-						end
-						imgui.SameLine()
-						imgui.Ques("Изменяет дальность прорисовки тумана.")
-						imgui.Text(fa.MOUNTAIN..u8" Дальность прорисовки лодов:")
-						if imgui.SliderInt(u8"##lod", sliders.lod, 0, 300) then
-							ini.settings.lod = sliders.lod[0]
-							save()
-						end
-						imgui.SameLine()
-						imgui.Ques("Изменяет дальность прорисовки лодов.")
-					end
-				end
+                if imgui.CollapsingHeader(fa.EYE..u8' Дальность прорисовки', imgui.TreeNodeFlags.DefaultOpen) then
+                    if imgui.Checkbox(u8" Включить возможность менять прорисовку", checkboxes.givemedist) then
+                        ini.settings.givemedist = checkboxes.givemedist[0] 
+                        save()
+                    end
+                    if ini.settings.givemedist then
+                        imgui.Text(fa.EYE..u8" Основная дальность прорисовки:")
+                        if imgui.SliderInt(u8"##Drawdist", sliders.drawdist, 35, 3600) then
+                            ini.settings.drawdist = sliders.drawdist[0]
+                            save()
+                        end
+                        imgui.SameLine()
+                        imgui.Ques("Изменяет основную дальность прорисовки.")
+                        imgui.Text(fa.PLANE_UP..u8" Дальность прорисовки в воздушном транспорте:")
+                        if imgui.SliderInt(u8"##drawdistair", sliders.drawdistair, 35, 3600) then
+                            ini.settings.drawdistair = sliders.drawdistair[0]
+                            save()
+                        end
+                        imgui.SameLine()
+                        imgui.Ques("Изменяет дальность прорисовки в воздушном транспорте.")
+                        imgui.Text(fa.PARACHUTE_BOX..u8" Дальность прорисовки при использовании парашута:")
+                        if imgui.SliderInt(u8"##drawdistpara", sliders.drawdistpara, 35, 3600) then
+                            ini.settings.drawdistpara = sliders.drawdistpara[0]
+                            save()
+                        end
+                        imgui.SameLine()
+                        imgui.Ques("Изменяет дальность прорисовки при использовании парашута.")
+                        imgui.Text(fa.SMOG..u8" Дальность прорисовки тумана:")
+                        if imgui.SliderInt(u8"##fog", sliders.fog, 0, 500) then
+                            ini.settings.fog = sliders.fog[0]
+                            save()
+                        end
+                        imgui.SameLine()
+                        imgui.Ques("Изменяет дальность прорисовки тумана.")
+                        imgui.Text(fa.MOUNTAIN..u8" Дальность прорисовки лодов:")
+                        if imgui.SliderInt(u8"##lod", sliders.lod, 0, 300) then
+                            ini.settings.lod = sliders.lod[0]
+                            save()
+                        end
+                        imgui.SameLine()
+                        imgui.Ques("Изменяет дальность прорисовки лодов.")
+                        end
+                    end
+                    if imgui.CollapsingHeader(fa.EYE..u8' Очистка памяти', imgui.TreeNodeFlags.DefaultOpen) then
+                        if imgui.Checkbox(u8" Включить авто-очистку памяти", checkboxes.autoclean) then
+                            ini.cleaner.autoclean = checkboxes.autoclean[0]
+                            save()
+                        end
+                        if imgui.Checkbox(u8" Показывать сообщение об очистке памяти", checkboxes.cleaninfo) then
+                            ini.cleaner.cleaninfo = checkboxes.cleaninfo[0]
+                            save()
+                        end
+                        if ini.cleaner.autoclean then
+                            if imgui.SliderInt(u8"##memlimit", sliders.limitmem, 80, 3000, u8"Лимит для авто-очистки: %d МБ") then
+                                ini.cleaner.limit = sliders.limitmem[0]
+                                save()
+                            end
+                        end
+                        if imgui.Button(u8"Очистить память", imgui.ImVec2(330, 25)) then
+                            gotofunc("CleanMemory")
+                        end
+                    end
 				
 			elseif tab[0] == 3 then
 				if imgui.Checkbox(u8" Исправление крови при повреждении дерева", checkboxes.fixbloodwood) then
@@ -815,27 +801,135 @@ local Frame = imgui.OnFrame(
 				imgui.SameLine()
 				imgui.Ques("Удаляет нули в худе, вместо 000.000.350$ будет 350$")
 				
-				if imgui.Checkbox(u8" Звёзды на экране", checkboxes.starsdisplay) then
-					ini.fixes.starsdisplay = checkboxes.starsdisplay[0]
+				if imgui.Checkbox(u8" Звёзды на экране", checkboxes.starsondisplay) then
+					ini.fixes.starsondisplay = checkboxes.starsondisplay[0]
 					save()
 					gotofunc("StarsOnDisplay")
 				end --writeMemory(0x6E7760, 1, 0xC3, true)
 				imgui.SameLine()
 				imgui.Ques("После включения этой функции вы должны перезайти в игру.")
+
+                if imgui.Checkbox(u8" Фикс чувствительности мышки", checkboxes.sensfix) then
+					ini.fixes.sensfix = checkboxes.sensfix[0]
+					save()
+					gotofunc("FixSensitivity")
+				end
+				imgui.SameLine()
+				imgui.Ques("Исправляет чувствительность мышки по осям Х и Y.")
+
+                if imgui.Checkbox(u8" Фикс чёрных дорог", checkboxes.fixblackroads) then
+					ini.fixes.fixblackroads = checkboxes.fixblackroads[0]
+					save()
+					gotofunc("FixBlackRoads")
+				end
+				imgui.SameLine()
+				imgui.Ques("Исправляет отображение чёрных дорог при низких настройках игры.")
+
+                if imgui.Checkbox(u8" Фикс длинных рук", checkboxes.longarmfix) then
+					ini.fixes.longarmfix = checkboxes.longarmfix[0]
+					save()
+					gotofunc("FixLongArm")
+				end
+				imgui.SameLine()
+				imgui.Ques("Исправляет расстягивание рук на двухколесном транспорте.")
 				
 			elseif tab[0] == 4 then
-				imgui.Text(fa.DATABASE..u8' Команды скрипта (большая часть возможно не работает)')
-				imgui.Separator()
+			
+				if imgui.Button(fa.ERASER..u8" Очистить чат", imgui.ImVec2(190, 25)) then
+                    gotofunc("ClearChat")
+                end
+                if imgui.IsItemHovered() then
+                    imgui.SetTooltip(u8"Чтобы быстро очистить чат\nвведите в чат команду: "..ini.commands.clearchat)
+                end
+
+                imgui.SameLine()
+				if imgui.Button(fa.CAMERA..u8" Режим SS: "..(bscreen and 'ON' or 'OFF').."", imgui.ImVec2(190, 25)) then
+                    bscreen = not bscreen
+                    if not id then
+                        for i = 1, 10000 do if not sampTextdrawIsExists(i) then id = i break end end
+                    end
+                    if bscreen then
+                        sampTextdrawCreate(id, "usebox", -7.000000, -7.000000)
+                        sampTextdrawSetLetterSizeAndColor(id, 0.474999, 55.000000, 0x00000000)
+                        sampTextdrawSetBoxColorAndSize(id, 1, 0xFF008000, 638.000000, 62.000000)
+                        sampTextdrawSetShadow(id, 0, 0xFF008000)
+                        sampTextdrawSetOutlineColor(id, 1, 0xFF008000)
+                        sampTextdrawSetAlign(id, 1)
+                        sampTextdrawSetProportional(id, 1)
+                    else
+                        sampTextdrawDelete(id)
+                        id = nil
+                    end
+                end
+                if imgui.IsItemHovered() then
+                    imgui.SetTooltip(u8"Функция включает зеленый экран\nУдобно когда вы делаете скриншот ситуации")
+                end
+
+                if imgui.Button(fa.KEYBOARD..u8" AntiAFK: "..(antiafk and 'ON' or 'OFF').."", imgui.ImVec2(190, 25)) then
+                    antiafk = not antiafk
+                    sampAddChatMessage(antiafk and script_name..' {FFFFFF}Анти-АФК {73b461}включен' or script_name..' {FFFFFF}Анти-АФК {dc4747}выключен', 0x73b461)
+                    if antiafk then
+                        memory.setuint8(7634870, 1, false)
+                        memory.setuint8(7635034, 1, false)
+                        memory.fill(7623723, 144, 8, false)
+                        memory.fill(5499528, 144, 6, false)
+                    else
+                        memory.setuint8(7634870, 0, false)
+                        memory.setuint8(7635034, 0, false)
+                        memory.hex2bin('0F 84 7B 01 00 00', 7623723, 8)
+                        memory.hex2bin('50 51 FF 15 00 83 85 00', 5499528, 6)
+                    end
+                end
+                if imgui.IsItemHovered() then
+                    imgui.SetTooltip(fa.EXCLAMATION..u8" Функция включает Анти-АФК\nесли вам не нужно чтобы после\nсворачивания игры она не вставала в паузу\n(Опасно, ибо можно получить бан!)")
+                end
+
+				if imgui.Button(fa.FIRE..u8" Получить бутылку пива", imgui.ImVec2(190, 25)) then
+                    runSampfuncsConsoleCommand('0afd:20')
+                end
+                imgui.SameLine()
+                if imgui.Button(fa.FIRE..u8" Получить бутылку пива 2", imgui.ImVec2(190, 25)) then
+                    runSampfuncsConsoleCommand('0afd:22')
+                end
+
+                if imgui.Button(fa.FIRE..u8" Получить Sprunk", imgui.ImVec2(190, 25)) then
+                    runSampfuncsConsoleCommand('0afd:23')
+                end
+
+				if imgui.IsItemHovered() then
+                    imgui.SetTooltip(u8"Сможешь выпить Sprunk когда захочешь и где хочешь!")
+                end
+                imgui.SameLine()
+                if imgui.Button(fa.FIRE..u8" Получить сигарету", imgui.ImVec2(190, 25)) then
+                    runSampfuncsConsoleCommand('0afd:21')
+                end
+				if imgui.IsItemHovered() then
+                    imgui.SetTooltip(u8"Сможешь закурить когда твоей душе угодно!")
+                end
+
+				if imgui.Button(fa.WATER..u8" Обоссать", imgui.ImVec2(190, 25)) then
+                    runSampfuncsConsoleCommand('0afd:68')
+                end
+				if imgui.IsItemHovered() then
+                    imgui.SetTooltip(u8"Сможешь обоссать кого захочешь!")
+                end
+				imgui.SameLine()
+				if imgui.Button(fa.EYE_SLASH..u8" Скрывать текстдравы: "..(showtextdraw and 'ON' or 'OFF').."", imgui.ImVec2(190, 25)) then
+                    showtextdraw = not showtextdraw
+                    for i = 0, 199999 do
+                        sampTextdrawDelete(i)
+                    end
+                end
+                if imgui.IsItemHovered() then
+                    imgui.SetTooltip(u8"Функция скрывает все текстдравы\nПримечание: после выключения данной функции будут возвращены не все текстдравы\nБудут возвращены лишь те что рисуются заново.")
+                end
 				
-					for _,v in ipairs(commands) do
-						imgui.Text(u8:encode(v))
-					end
-					imgui.SameLine()
-					imgui.SetCursorPosY(25)
-					for _,v in ipairs(texincommands) do
-						imgui.SetCursorPosX(100)
-						imgui.Ques(v)
-					end
+				imgui.Separator()
+				imgui.Text(fa.DATABASE..u8' Команды скрипта (большая часть возможно не работает)')
+				
+				for _,v in ipairs(commands) do
+					imgui.Text(u8:encode(v))
+				end
 			elseif tab[0] == 5 then
 				imgui.Text(fa.HOUSE..u8" Изменение темы:")
 				if imgui.Combo("##1", int_item, ImItems, #item_list) then
@@ -854,6 +948,7 @@ local Frame = imgui.OnFrame(
 				if imgui.SliderFloat(u8"##RoundedOther", sliders.roundthemecomp, 0, 10, '%.1f') then
 					ini.themesetting.roundedcomp = sliders.roundthemecomp[0]
 					imgui.GetStyle().FrameRounding = sliders.roundthemecomp[0]
+					imgui.GetStyle().GrabRounding = sliders.roundthemecomp[0]
 					save()
 				end
 				imgui.SameLine()
@@ -861,10 +956,11 @@ local Frame = imgui.OnFrame(
 				
 				if imgui.SliderFloat(u8"##RoundedMenu", sliders.roundthememenu, 0, 10, '%.1f') then
 					ini.themesetting.roundedmenu = sliders.roundthememenu[0]
+					imgui.GetStyle().ChildRounding = sliders.roundthememenu[0]
 					save()
 				end
 				imgui.SameLine()
-				imgui.Ques("Изменяет значение закругления пунктов выбора меню (стандартное значение 4.0).")
+				imgui.Ques("Изменяет значение закругления пунктов выбора меню и чайлдов (стандартное значение 4.0).")
 				if imgui.Checkbox(u8" Новый цвет диалогов", checkboxes.dialogstyle) then
 					ini.themesetting.dialogstyle = checkboxes.dialogstyle[0]
 					save()
@@ -888,13 +984,15 @@ local Frame = imgui.OnFrame(
 				
 				local _, myid = sampGetPlayerIdByCharHandle(playerPed)
 				local mynick = sampGetPlayerNickname(myid) -- наш ник крч
+				local myping = sampGetPlayerPing(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)))
+				local framerate = imgui.GetIO().Framerate
 				
 				imgui.PushStyleColor(imgui.Col.Text, imgui.ImVec4(0.5, 0.5, 0.5, 1))
 				imgui.Text(fa.USER..u8' Пользователь: '..mynick..'['..myid..']')
-				imgui.Text(fa.CLOCK..u8(string.format(' Текущая дата: %s', os.date())))
-				local framerate = imgui.GetIO().Framerate
+				imgui.Text(fa.SIGNAL..u8' Пинг: '..myping)
+				imgui.Text(fa.CLOCK..u8(string.format(' Текущая дата: %s', os.date("%d.%m.%Y %H:%M:%S"))))
 				imgui.Text(fa.TERMINAL..u8(string.format(' Средняя задержка: %.3f мс | Кадров: (%.1f FPS)', 1000.0 / framerate, framerate)))
-				imgui.Text(fa.TERMINAL..u8' Версия: '..thisScript().version..' '..versionold..'')
+				imgui.Text(fa.FOLDER..u8' Версия: '..thisScript().version..' '..versionold..'')
 				imgui.Text(fa.ADDRESS_CARD..u8' Автор:')
 				imgui.SameLine() 
 				imgui.Link('https://github.com/riverya4life', script_author)
@@ -905,32 +1003,6 @@ local Frame = imgui.OnFrame(
         imgui.End()
     end
 )
-
-function setTime(time)
-	local time = tonumber(time)
-    if type(time) ~= 'number' or tonumber(time) > tonumber(23) then
-        sampAddChatMessage(script_name.." {FFFFFF}Используйте {dc4747}/st [0-23]", 0x73b461)
-    else
-        sampAddChatMessage(script_name.." {FFFFFF}Установлено время: {dc4747}"..time.."", 0x73b461)
-        memory.write(0xB70153, time, 1, false)
-        ini.settings.time = time
-        save()
-    end
-end
-
-function setWeather(weather)
-	local weather = tonumber(weather)
-    if type(weather) ~= 'number' or tonumber(weather) > tonumber(45) then
-        sampAddChatMessage(script_name.." {FFFFFF}Используйте {dc4747}/sw [0-45]", 0x73b461)
-    else
-        sampAddChatMessage(script_name.." {FFFFFF}Установлена погода: {dc4747}"..weather.."", 0x73b461)
-        memory.write(0xC81320, weather, 2, false)
-        memory.write(0xC81318, weather, 2, false)
-        memory.write(0xC81320, weather, 2, false)
-        ini.settings.weather = weather
-        save()
-    end
-end
 
 function onReceivePacket(id) -- будет флудить wrong server password до тех пор, пока сервер не откроется
 	if id == 37 then
@@ -965,7 +1037,7 @@ function onWindowMessage(msg, wparam, lparam) -- блокировка клавиш alt + tab ёба
 	if (msg == 256 or msg == 257) and wparam == 27 and imgui.Process and not isPauseMenuActive() and not sampIsCursorActive() then
         consumeWindowMessage(true, true)
         if msg == 257 then
-            mainFrame = imgui.new.bool(false)
+            mainFrame = new.bool(false)
         end
 	end
 
@@ -1023,16 +1095,23 @@ function editRadarMapColor(Alpha)
     memory.setuint8(0x5864BD, Alpha, true)
 end
 
+function join_argb(a, r, g, b)
+    local argb = b  -- b
+    argb = bit.bor(argb, bit.lshift(g, 8))  -- g
+    argb = bit.bor(argb, bit.lshift(r, 16)) -- r
+    argb = bit.bor(argb, bit.lshift(a, 24)) -- a
+    return argb
+end
+
 function cleanStreamMemoryBuffer()
-	local huy = callFunction(0x53C500, 2, 2, true, true)
-	local huy1 = callFunction(0x53C810, 1, 1, true)
-	local huy2 = callFunction(0x40CF80, 0, 0)
-	local huy3 = callFunction(0x4090A0, 0, 0)
-	local huy4 = callFunction(0x5A18B0, 0, 0)
-	local huy5 = callFunction(0x707770, 0, 0)
-	local pX, pY, pZ = getCharCoordinates(PLAYER_PED)
-	requestCollision(pX, pY)
-	loadScene(pX, pY, pZ)
+	local huy = callFunction(0x53C500, 2, 2, 1, 1)
+    local huy1 = callFunction(0x40D7C0, 1, 1, -1)
+    local huy2 = callFunction(0x53C810, 1, 1, 1)
+    local huy3 = callFunction(0x40CF80, 0, 0)
+    local huy4 = callFunction(0x4090A0, 0, 0)
+    local huy5 = callFunction(0x5A18B0, 0, 0)
+    local huy6 = callFunction(0x707770, 0, 0)
+    local huy7 = callFunction(0x40CFD0, 0, 0)
 end
 
 function samp.onSetMapIcon(iconId, position, type, color, style)
@@ -1071,10 +1150,17 @@ function gotofunc(fnc)
     if fnc == "all" then
         callFunction(0x7469A0, 0, 0) --mousefix in pause
         --------[фикс спавна с бутылкой и сигарой]----------
-        memory.fill(0x4217F4, 0x90, 21, true)
-        memory.fill(0x4218D8, 0x90, 17, true)
-        memory.fill(0x5F80C0, 0x90, 10, true)
-        memory.fill(0x5FBA47, 0x90, 10, true)
+        memory.setuint32(0x736F88, 0, false) --вертолет не взрывается много раз
+        memory.fill(0x4217F4, 0x90, 21, false) --исправление спавна с бутылкой
+        memory.fill(0x4218D8, 0x90, 17, false) --исправление спавна с бутылкой
+        memory.fill(0x5F80C0, 0x90, 10, false) --исправление спавна с бутылкой
+        memory.fill(0x5FBA47, 0x90, 10, false) --исправление спавна с бутылкой
+        memory.write(0x53E94C, 0, 1, false) --del fps delay 14 ms
+        memory.write(0x555854, 0x90909090, 4, false) --InterioRreflections
+        memory.write(0x555858, 0x90, 1, false) --InterioRreflections
+        memory.write(0x745BC9, 0x9090, 2, false) --SADisplayResolutions(1920x1080// 16:9)
+        memory.fill(0x460773, 0x90, 7, false) --CJFix
+        memory.setuint32(12761548, 1051965045, false) -- car speed fps fix
         ---------------------------------------------
         if get_samp_version() == "r1" then
             memory.write(sampGetBase() + 0x64ACA, 0xFB, 1, true) --Min FontSize -5
@@ -1098,45 +1184,11 @@ function gotofunc(fnc)
         mainFrame[0] = not mainFrame[0]
 	end
 	-----------------------Главная-----------------------
-	if fnc == "BlockWeather" or fnc == "all" then
-        if get_samp_version() == "r1" then
-            if ini.settings.blockweather then
-                writeMemory(sampGetBase() + 0x9C130, 4, 0x0004C2, true)
-            else
-                writeMemory(sampGetBase() + 0x9C130, 4, 0x5D418B, true)
-            end
-        elseif get_samp_version() == "r3" then
-            if ini.settings.blockweather then
-                writeMemory(sampGetBase() + 0xA0430, 4, 0x0004C2, true)
-            else
-                writeMemory(sampGetBase() + 0xA0430, 4, 0x5D418B, true)
-            end
+    if fnc == "AlphaMap" or fnc == "all" then
+        if ini.settings.alphamap then
+            editRadarMapColor(ini.settings.alphamap)
         end
     end
-	if fnc == "BlockTime" or fnc == "all" then
-        if get_samp_version() == "r1" then
-            if ini.settings.blocktime then
-                writeMemory(sampGetBase() + 0x9C0A0, 4, 0x000008C2, true)
-            else
-                writeMemory(sampGetBase() + 0x9C0A0, 4, 0x0824448B, true)
-            end
-        elseif get_samp_version() == "r3" then
-            if ini.settings.blocktime then
-                writeMemory(sampGetBase() + 0xA03A0, 4, 0x000008C2, true)
-            else
-                writeMemory(sampGetBase() + 0xA03A0, 4, 0x0824448B, true)
-            end
-        end
-    end
-	if fnc == "AnimationMoney" or fnc == "all" then
-        if ini.settings.animmoney == 1 then
-            memory.write(5707667, 138, 1, true)
-        elseif ini.settings.animmoney == 2 then
-            memory.write(5707667, 137, 1, true)
-        elseif ini.settings.animmoney == 3 then
-            memory.write(5707667, 139, 1, true)
-        end
-	end
 	-----------------------Boost FPS-----------------------
 	if fnc == "NoPostfx" or fnc == "all" then
         if ini.settings.postfx then
@@ -1156,7 +1208,15 @@ function gotofunc(fnc)
             memory.write(4891712, 1443425411, 4, false)
         end
 	end
-	-----------------------Исправления-----------------------
+    if fnc == "CleanMemory" then
+        local oldram = ("%d"):format(tonumber(get_memory()))
+        cleanStreamMemoryBuffer()
+        local newram = ("%d"):format(tonumber(get_memory()))
+        if ini.cleaner.cleaninfo then
+            sampAddChatMessage(script_name.."{FFFFFF} Памяти до: {dc4747}"..oldram.." МБ. {FFFFFF}Памяти после: {dc4747}"..newram.." МБ. {FFFFFF}Очищено: {dc4747}"..oldram - newram.." МБ.", 0x73b461)
+        end
+    end
+	-----------------------Исправления блять-----------------------
 	if fnc == "FixBloodWood" or fnc == "all" then
         if ini.fixes.fixbloodwood then
             writeMemory(0x49EE63+1, 4, 0, true)--fix blood wood
@@ -1204,27 +1264,80 @@ function gotofunc(fnc)
 			memory.fill(0x58DFD3, 0x90, 5, true)
         end
 	end
-	-----------------------Команды-----------------------
-	if fnc == "ShowNicks" or fnc == "all" then
+    if fnc == "Vsync" or fnc == "all" then
+        if ini.settings.vsync then
+            memory.write(0xBA6794, 1, 1, true)
+        else
+            memory.write(0xBA6794, 0, 1, true)
+        end
+    end
+    if fnc == "FixSensitivity" or fnc == "all" then
+        if ini.fixes.sensfix then
+            memory.write(5382798, 11987996, 4, true)
+            memory.write(5311528, 11987996, 4, true)
+            memory.write(5316106, 11987996, 4, true)
+        else
+            memory.write(5382798, 11987992, 4, true)
+            memory.write(5311528, 11987992, 4, true)
+            memory.write(5316106, 11987992, 4, true)
+        end
+	end
+    if fnc == "FixBlackRoads" or fnc == "all" then
+        if ini.fixes.fixblackroads then
+            memory.write(8931716, 0, 4, true)
+        else
+            memory.write(8931716, 2, 4, true)
+        end
+	end
+    if fnc == "FixLongArm" or fnc == "all" then
+        if ini.fixes.longarmfix then
+            memory.write(7045634, 33807, 2, true)
+            memory.write(7046489, 33807, 2, true)
+        else
+            memory.write(7045634, 59792, 2, true)
+            memory.write(7046489, 59792, 2, true)
+        end
+	end
+	-----------------------Команды и прочее-----------------------
+	if fnc == "ShowNicks" then
         if ini.settings.shownicks then
             memory.setint16(sampGetBase() + 0x70D40, 0xC390, true)
         else
             memory.setint16(sampGetBase() + 0x70D40, 0x8B55, true)
         end
 	end
-	if fnc == "ShowHP" or fnc == "all" then
+	if fnc == "ShowHP" then
 		if ini.settings.showhp then
 			memory.setint16(sampGetBase() + 0x6FC30, 0xC390, true)
 		else
 			memory.setint16(sampGetBase() + 0x6FC30, 0x8B55, true)
 		end
 	end
-	if fnc == "NoRadio" or fnc == "all" then
+	if fnc == "NoRadio" then
         if ini.settings.noradio then
             memory.write(5159328, -1947628715, 4, true)
         else
             memory.write(5159328, -1962933054, 4, true)
         end
+	end
+	if fnc == "DelGun" then
+        if ini.settings.delgun == true and isKeyJustPressed(46) and not sampIsCursorActive() then
+            removeAllCharWeapons(PLAYER_PED)
+        end
+	end
+	if fnc == "ClearChat" then
+		memory.fill(sampGetChatInfoPtr() + 306, 0x0, 25200)
+        memory.write(sampGetChatInfoPtr() + 306, 25562, 4, 0x0)
+        memory.write(sampGetChatInfoPtr() + 0x63DA, 1, 1)
+    end
+	if fnc == "ShowChat" then
+		if ini.settings.showchat then
+			memory.write(sampGetBase() + 0x7140F, 1, 1, true)
+			sampSetChatDisplayMode(0)
+		else
+			memory.write(sampGetBase() + 0x7140F, 0, 1, true)
+			sampSetChatDisplayMode(3)
+		end
 	end
 	-----------------------Настройки-----------------------
 	if fnc == "DialogStyle" or fnc == "all" then
@@ -1235,6 +1348,116 @@ function gotofunc(fnc)
 		end
 	end
 end
+
+function imgui.Ques(text)
+    imgui.TextDisabled('(?)')
+    if imgui.IsItemHovered() then
+        imgui.BeginTooltip()
+        imgui.PushTextWrapPos(450)
+        imgui.TextUnformatted(u8(text))
+        imgui.PopTextWrapPos()
+        imgui.EndTooltip()
+    end
+end
+
+function imgui.Link(link,name,myfunc)
+	myfunc = type(name) == 'boolean' and name or myfunc or false
+	name = type(name) == 'string' and name or type(name) == 'boolean' and link or link
+	local size = imgui.CalcTextSize(name)
+	local p = imgui.GetCursorScreenPos()
+	local p2 = imgui.GetCursorPos()
+	local resultBtn = imgui.InvisibleButton('##'..link..name, size)
+	if resultBtn then
+		if not myfunc then
+		    os.execute('explorer '..link)
+		end
+	end
+	imgui.SetCursorPos(p2)
+	if imgui.IsItemHovered() then
+		imgui.TextColored(imgui.GetStyle().Colors[imgui.Col.ButtonHovered], name)
+		imgui.GetWindowDrawList():AddLine(imgui.ImVec2(p.x, p.y + size.y), imgui.ImVec2(p.x + size.x, p.y + size.y), imgui.GetColorU32Vec4(imgui.GetStyle().Colors[imgui.Col.ButtonHovered]))
+	else
+		imgui.TextColored(imgui.GetStyle().Colors[imgui.Col.Button], name)
+	end
+	return resultBtn
+end
+
+imgui.OnInitialize(function()
+	imgui.GetIO().IniFilename = nil
+    local config = imgui.ImFontConfig()
+    config.MergeMode = true
+    config.PixelSnapH = true
+    iconRanges = new.ImWchar[3](fa.min_range, fa.max_range, 0)
+    imgui.GetIO().Fonts:AddFontFromMemoryCompressedBase85TTF(fa.get_font_data_base85('solid'), 14, config, iconRanges) -- solid - тип иконок, так же есть thin, regular, light и duotone
+	imgui.GetStyle().WindowTitleAlign = imgui.ImVec2(0.5, 0.5)
+	SwitchTheStyle(ini.themesetting.theme)
+end)
+
+-- labels - Array - названия элементов меню
+-- selected - imgui.ImInt() - выбранный пункт меню
+-- size - imgui.ImVec2() - размер элементов
+-- speed - float - скорость анимации выбора элемента (необязательно, по стандарту - 0.2)
+-- centering - bool - центрирование текста в элементе (необязательно, по стандарту - false)
+function imgui.CustomMenu(labels, selected, size, speed, centering)
+    local bool = false
+	local centering = false
+    speed = speed and speed or 0.500
+    local radius = size.y * 0.50
+    local draw_list = imgui.GetWindowDrawList()
+    if LastActiveTime == nil then LastActiveTime = {} end
+    if LastActive == nil then LastActive = {} end
+    local function ImSaturate(f)
+        return f < 0.0 and 0.0 or (f > 1.0 and 1.0 or f)
+    end
+    for i, v in ipairs(labels) do
+        local c = imgui.GetCursorPos()
+        local p = imgui.GetCursorScreenPos()
+        if imgui.InvisibleButton(v..'##'..i, size) then
+            selected[0] = i
+            LastActiveTime[v] = os.clock()
+            LastActive[v] = true
+            bool = true
+        end
+        imgui.SetCursorPos(c)
+        local t = selected[0] == i and 1.0 or 0.0
+        if LastActive[v] then
+            local time = os.clock() - LastActiveTime[v]
+            if time <= 0.3 then
+                local t_anim = ImSaturate(time / speed)
+                t = selected[0] == i and t_anim or 1.0 - t_anim
+            else
+                LastActive[v] = false
+            end
+        end
+        
+		local col_bg = imgui.GetColorU32Vec4(selected[0] == i and imgui.ImVec4(0.10, 0.10, 0.10, 0.60) or imgui.ImVec4(0,0,0,0))
+		local col_box = imgui.GetColorU32Vec4(selected[0] == i and imgui.GetStyle().Colors[imgui.Col.ButtonHovered] or imgui.ImVec4(0,0,0,0))
+		local col_hovered = imgui.GetStyle().Colors[imgui.Col.ButtonHovered]
+		local col_hovered = imgui.GetColorU32Vec4(imgui.ImVec4(col_hovered.x, col_hovered.y, col_hovered.z, (imgui.IsItemHovered() and 0.2 or 0)))
+		
+		if selected[0] == i then draw_list:AddRectFilledMultiColor(imgui.ImVec2(p.x-size.x/6, p.y), imgui.ImVec2(p.x + (radius * 0.65) + t * size.x, p.y + size.y), imgui.GetColorU32Vec4(imgui.GetStyle().Colors[imgui.Col.Button]), imgui.GetColorU32Vec4(imgui.ImVec4(0,0,0,0)), imgui.GetColorU32Vec4(imgui.ImVec4(0,0,0,0)), imgui.GetColorU32Vec4(imgui.GetStyle().Colors[imgui.Col.Button])) end
+		draw_list:AddRectFilled(imgui.ImVec2(p.x-size.x/6, p.y), imgui.ImVec2(p.x + (radius * 0.65) + size.x, p.y + size.y), col_hovered, ini.themesetting.roundedmenu)
+		imgui.SetCursorPos(imgui.ImVec2(c.x+(centering and (size.x-imgui.CalcTextSize(v).x)/2 or 15), c.y+(size.y-imgui.CalcTextSize(v).y)/2))
+		if selected[0] == i then 
+			imgui.TextColored(imgui.GetStyle().Colors[imgui.Col.ButtonHovered], v)
+		else
+			imgui.TextColored(imgui.ImVec4(0.60, 0.60, 0.60, 0.60), v)
+		end
+		draw_list:AddRectFilled(imgui.ImVec2(p.x, p.y), imgui.ImVec2(p.x+7.5, p.y + size.y), col_box)
+		imgui.SetCursorPos(imgui.ImVec2(c.x, c.y+size.y))
+    end
+    return bool
+end
+
+-----------------------Реколорер блять-----------------------
+function join_argb(a, b, g, r)
+    local argb = b  -- b
+    argb = bit.bor(argb, bit.lshift(g, 8))  -- g
+    argb = bit.bor(argb, bit.lshift(r, 16)) -- r
+    argb = bit.bor(argb, bit.lshift(a, 24)) -- a
+    return argb
+end
+-------------------------------------------------------------
 
 function SwitchTheStyle(theme)
     imgui.SwitchContext()
@@ -1255,7 +1478,8 @@ function SwitchTheStyle(theme)
     style.ScrollbarSize = 12.0
     style.ScrollbarRounding = 16.0
     style.GrabMinSize = 20.0
-    style.GrabRounding = 2.0
+    style.GrabRounding = sliders.roundthemecomp[0]
+	style.ChildRounding = sliders.roundthememenu[0]
 
     if theme == 1 or theme == nil then
         colors[imgui.Col.FrameBg]                = ImVec4(0.16, 0.29, 0.48, 0.54)
