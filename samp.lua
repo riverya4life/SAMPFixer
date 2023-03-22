@@ -1,4 +1,4 @@
-script_name = "[SAMP++]"
+script_name = "[SAMPFixer]"
 script_author = "riverya4life."
 script_version(0.7)
 
@@ -74,6 +74,7 @@ local ini = inicfg.load(inicfg.load({
 		roundedcomp = 2.0,
 		roundedmenu = 4.0,
 		dialogstyle = false,
+		windowborder = true,
 	},
     cleaner = {
         limit = 512,
@@ -166,6 +167,7 @@ local checkboxes = {
     longarmfix = new.bool(ini.fixes.longarmfix),
     vsync = new.bool(ini.settings.vsync),
 	recolorer = new.bool(ini.settings.recolorer),
+	windowborder = new.bool(ini.themesetting.windowborder),
     --------------------------------------------------
     cleaninfo = new.bool(ini.cleaner.cleaninfo),
     autoclean = new.bool(ini.cleaner.autoclean),
@@ -764,7 +766,12 @@ local Frame = imgui.OnFrame(
     function(self)
         imgui.SetNextWindowSize(imgui.ImVec2(670, 325), imgui.Cond.FirstUseEver)
 		imgui.SetNextWindowPos(imgui.ImVec2((sw / 2), sh / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-		imgui.Begin(u8"SAMP++ by "..script_author.."", mainFrame, imgui.WindowFlags.NoResize)
+		imgui.Begin(u8"SAMPFixer by "..script_author.."", mainFrame, imgui.WindowFlags.NoResize)
+			imgui.PushStyleColor(imgui.Col.Text, imgui.ImVec4(0.5, 0.5, 0.5, 0.5))
+			imgui.SetCursorPos(imgui.ImVec2(7, 300))
+			imgui.SetCursorPosX(35)
+			imgui.Text(fa.GEAR..u8" SAMPFixer")
+			imgui.PopStyleColor()
 			imgui.SetCursorPos(imgui.ImVec2(-2, 25))
 			imgui.CustomMenu(tabs, tab, imgui.ImVec2(140, 50))
 
@@ -1155,10 +1162,12 @@ local Frame = imgui.OnFrame(
 					ini.themesetting.roundedcomp = sliders.roundthemecomp[0]
 					imgui.GetStyle().FrameRounding = sliders.roundthemecomp[0]
 					imgui.GetStyle().GrabRounding = sliders.roundthemecomp[0]
+					imgui.GetStyle().PopupRounding = sliders.roundthemecomp[0]
+					imgui.GetStyle().ScrollbarRounding = sliders.roundthemecomp[0]
 					save()
 				end
 				imgui.SameLine()
-				imgui.Ques("Изменяет значение закругления остальных компонентов окна, например кнопки и так далее (стандартное значение 2.0).")
+				imgui.Ques("Изменяет значение закругления компонентов, к примеру кнопки, слайдеры и т.д. (стандартное значение 2.0).")
 				
 				if imgui.SliderFloat(u8"##RoundedMenu", sliders.roundthememenu, 0, 10, '%.1f') then
 					ini.themesetting.roundedmenu = sliders.roundthememenu[0]
@@ -1167,6 +1176,23 @@ local Frame = imgui.OnFrame(
 				end
 				imgui.SameLine()
 				imgui.Ques("Изменяет значение закругления пунктов выбора меню и чайлдов (стандартное значение 4.0).")
+
+				if imgui.Checkbox(u8" Обводка окна и компонентов", checkboxes.windowborder) then
+					ini.themesetting.windowborder = checkboxes.windowborder[0]
+					if ini.themesetting.windowborder == true then
+						imgui.GetStyle().WindowBorderSize = 1
+						imgui.GetStyle().FrameBorderSize = 1
+						imgui.GetStyle().PopupBorderSize = 1
+					else
+						imgui.GetStyle().WindowBorderSize = 0
+						imgui.GetStyle().FrameBorderSize = 0
+						imgui.GetStyle().PopupBorderSize = 0
+					end
+					save()
+				end
+				imgui.SameLine()
+				imgui.Ques("Включает и выключает обводку окна и компонентов (кнопки, слайдеры и т.д.).")
+
 				if imgui.Checkbox(u8" Новый цвет диалогов", checkboxes.dialogstyle) then
 					ini.themesetting.dialogstyle = checkboxes.dialogstyle[0]
 					save()
@@ -1640,7 +1666,6 @@ imgui.OnInitialize(function()
     config.PixelSnapH = true
     iconRanges = new.ImWchar[3](fa.min_range, fa.max_range, 0)
     imgui.GetIO().Fonts:AddFontFromMemoryCompressedBase85TTF(fa.get_font_data_base85('solid'), 14, config, iconRanges) -- solid - тип иконок, так же есть thin, regular, light и duotone
-	imgui.GetStyle().WindowTitleAlign = imgui.ImVec2(0.5, 0.5)
 	SwitchTheStyle(ini.themesetting.theme)
 end)
 
@@ -1725,12 +1750,18 @@ function SwitchTheStyle(theme)
     style.ItemSpacing = ImVec2(7, 4)
     style.ItemInnerSpacing = ImVec2(1, 1)
     style.TouchExtraPadding = ImVec2(0, 0)
+	style.WindowTitleAlign = imgui.ImVec2(0.5, 0.5)
     style.IndentSpacing = 6.0
     style.ScrollbarSize = 12.0
-    style.ScrollbarRounding = 16.0
+    style.ScrollbarRounding = sliders.roundthemecomp[0]
     style.GrabMinSize = 20.0
     style.GrabRounding = sliders.roundthemecomp[0]
 	style.ChildRounding = sliders.roundthememenu[0]
+	style.WindowBorderSize = checkboxes.windowborder[0]
+	style.PopupRounding = sliders.roundthemecomp[0]
+
+    style.PopupBorderSize = checkboxes.windowborder[0]
+    style.FrameBorderSize = checkboxes.windowborder[0]
 
     if theme == 1 or theme == nil then
         colors[imgui.Col.FrameBg]                = ImVec4(0.16, 0.29, 0.48, 0.54)
