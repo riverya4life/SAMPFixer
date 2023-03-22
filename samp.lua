@@ -46,6 +46,8 @@ local ini = inicfg.load(inicfg.load({
         separate_msg = false,
         vsync = false,
 		recolorer = false,
+		language = 1,
+		moneyfontstyle = 3,
     },
     hphud = {
         active = false,
@@ -89,6 +91,17 @@ local ini = inicfg.load(inicfg.load({
 		showchat = "/showchat",
 		arzdialog = "/arzdialog",
 	},
+	--========================== [ recolorer ] ====================================
+    RECOLORER_HEALTH = { r = 255, g = 2.3, b = 2.3, },
+    RECOLORER_ARMOUR = { r = 214.8, g = 214.8, b = 214.8, },
+    RECOLORER_PLAYERHEALTH = { r = 255, g = 0, b = 0, },
+    RECOLORER_PLAYERHEALTH2 = { r = 50, g = 50, b = 50, },
+    RECOLORER_PLAYERARMOR = { r = 1, g = 1, b = 1, },
+    RECOLORER_PLAYERARMOR2 = { r = 0.50, g = 0.50, b = 0.50, },
+    RECOLORER_MONEY = { r = 0, g = 129.8, b = 10.8, },
+    RECOLORER_STARS = { r = 255, g = 189.3, b = 86.1, },
+    RECOLORER_PATRONS = { r = 187.0, g = 210.0, b = 222.0, },
+    --=============================================================================
 }, directIni))
 inicfg.save(ini, directIni)
 
@@ -106,6 +119,7 @@ local onspawned = false
 local offspawnchecker = true
 local bscreen = false
 local showtextdraw = false
+local updatesavaliable = false
 local commands = {'clear', 'threads', 'chatcmds'}
 local MAX_SAMP_MARKERS = 63
 local CVehicle_DoSunGlare = ffi.cast("void (__thiscall*)(unsigned int)", 0x6DD6F0)
@@ -128,6 +142,7 @@ local sliders = {
     fog = new.int(ini.settings.fog),
     lod = new.int(ini.settings.lod),
 	alphamap = new.int(ini.settings.alphamap),
+	moneyfontstyle = new.int(ini.settings.moneyfontstyle),
     ------------------------------------------------
     limitmem = new.int(ini.cleaner.limit),
 }
@@ -156,11 +171,141 @@ local checkboxes = {
     autoclean = new.bool(ini.cleaner.autoclean),
 }
 
+local icolors = {
+    RECOLORER_HEALTH = new.float[3](ini.RECOLORER_HEALTH.r, ini.RECOLORER_HEALTH.g, ini.RECOLORER_HEALTH.b),
+    RECOLORER_ARMOUR = new.float[3](ini.RECOLORER_ARMOUR.r, ini.RECOLORER_ARMOUR.g, ini.RECOLORER_ARMOUR.b),
+    RECOLORER_PLAYERHEALTH = new.float[3](ini.RECOLORER_PLAYERHEALTH.r, ini.RECOLORER_PLAYERHEALTH.g, ini.RECOLORER_PLAYERHEALTH.b),
+    RECOLORER_PLAYERHEALTH2 = new.float[3](ini.RECOLORER_PLAYERHEALTH2.r, ini.RECOLORER_PLAYERHEALTH2.g, ini.RECOLORER_PLAYERHEALTH2.b),
+    RECOLORER_PLAYERARMOR = new.float[3](ini.RECOLORER_PLAYERARMOR.r, ini.RECOLORER_PLAYERARMOR.g, ini.RECOLORER_PLAYERARMOR.b),
+    RECOLORER_PLAYERARMOR2 = new.float[3](ini.RECOLORER_PLAYERARMOR2.r, ini.RECOLORER_PLAYERARMOR2.g, ini.RECOLORER_PLAYERARMOR2.b),
+    RECOLORER_MONEY = new.float[3](ini.RECOLORER_MONEY.r, ini.RECOLORER_MONEY.g, ini.RECOLORER_MONEY.b),
+    RECOLORER_STARS = new.float[3](ini.RECOLORER_STARS.r, ini.RECOLORER_STARS.g, ini.RECOLORER_STARS.b),
+    RECOLORER_PATRONS = new.float[3](ini.RECOLORER_PATRONS.r, ini.RECOLORER_PATRONS.g, ini.RECOLORER_PATRONS.b),
+}
+
 local buffers = {
 	cmd_openmenu = new.char[64](ini.commands.openmenu),
 	cmd_animmoney = new.char[64](ini.commands.animmoney),
 	cmd_shownicks = new.char[64](ini.commands.shownicks),
 }
+
+-- Language
+--[[local languageNames = {'English', u8'Українська', u8'Русский'}
+local languageIndex = new.int(ini.main.languageIndex)
+local language = {
+	[1] = {
+		------------------------------------ [Menu] --------------------------------------------
+		tab1 = fa.HOUSE..u8' Home',
+		tab2 = fa.DESKTOP..u8' Boost FPS', 
+		tab3 = fa.GEAR..u8' Fixes', 
+		tab4 = fa.GAMEPAD..u8' Прочее', 
+		tab5 = fa.BARS..u8' Other',
+		------------------------------------ [Settings] --------------------------------------------
+		switchoff = u8'Switch off',
+		switchon = u8'Turn on',
+		switchoffchat = u8'off',
+		switchonchat = u8'enabled',
+		------------------------------------ [Themes] --------------------------------------------
+		theme1 = u8'Blue',
+		theme2 = u8'Red',
+		theme3 = u8'Brown',
+		theme4 = u8'Aqua',
+		theme5 = u8'Black',
+		theme6 = u8'Violet',
+		theme7 = u8'Dark-orange',
+		theme8 = u8'Grey',
+		theme9 = u8'Cherrish',
+		theme10 = u8'Green',
+		theme11 = u8'Purple',
+		theme12 = u8'Dark-green',
+		theme13 = u8'Orange',
+		------------------------------------ [Menu Home] --------------------------------------------
+		slidersetweather = u8'Weather',
+		slidersetweatherquestext = u8'Changes the game weather to its own.',
+		slidersettime = u8'Time',
+		slidersettimequestext = u8'Changes the game time to your own.',
+		checkboxblockweather = u8' Block weather change by the server',
+		checkboxblocktime = u8' Block the server from changing the time',
+		comboanimationmoney = fa.CIRCLE_DOLLAR_TO_SLOT..u8' Animation of adding / decreasing money:',
+		slideralphamap = fa.CLOUD_SUN_RAIN..u8' Transparency of the map on the radar:',
+		slideralphamapquestext = u8'Changes the transparency of the map on the radar. The map itself in the ESC menu will be normal (value from 0 to 255).',
+		buttonvsync = u8'vertical sync',
+		buttonvsynctextchat = u8'Vertical Sync',
+		------------------------------------ [Boost FPS] --------------------------------------------
+		checkboxpostfx = u8' Disable post-processing',
+		checkboxpostfxquestext = u8' Disables post-processing if you have a weak PC.',
+		checkboxdisableeffects = u8' Disable effects',
+		checkboxdisableeffectsquestext = u8' Disables effects in the game if you have a weak PC.',
+		collapsingheaderdrawdist = fa.EYE..u8' Render distance',
+		checkboxgivemedist = u8' Enable the ability to change the rendering',
+		sliderdrawdist = fa.EYE..u8' Main draw distance:',
+		sliderdrawdistquestext = u8'Changes the main draw distance.',
+		sliderdrawdistair = fa.PLANE_UP..u8' Draw distance in air transport:',
+		sliderdrawdistairquestext = u8'Changes the draw distance in air transport.',
+		sliderdrawdistpara = fa.PARACHUTE_BOX..u8' Draw distance when using a parachute:',
+		sliderdrawdistparaquestext = u8'Changes the draw distance when using a parachute.',
+		sliderfog = fa.SMOG..u8' Fog rendering distance:',
+		sliderfogquestext = u8'Changes the fog rendering distance',
+		sliderlod = fa.MOUNTAIN..u8' Lod draw distance:',
+		sliderlodquestext = u8'Changes the draw distance of lods.',
+		collapsingheadercleanmemory = fa.EYE..u8' Clearing memory',
+		checkboxautoclean = u8' Enable auto clear memory',
+		checkboxclearinfo = u8' Show memory clear message',
+		sliderlimitmemory = u8'Auto clear limit: %d MB',
+		buttonclearmemory = u8'Clear memory',
+		------------------------------------ [Fixes] --------------------------------------------
+		checkboxfixbloodwood = u8' Fixing blood when wood is damaged',
+		checkboxfixbloodwoodquestext = u8'Correction of blood when a tree is damaged.',
+		checkboxnolimitmoneyhud = u8' Remove the limit on limiting money in the HUD',
+		checkboxnolimitmoneyhudquestext = u8'Removes the limit on the amount of money in the HUD if you have more than $999.999.999',
+		checkboxsunfix = u8' Bring back the sun',
+		checkboxsunfixquestext = u8'Brings back the sun from single player.',
+		checkboxgrassfix = u8' Bring back the grass',
+		checkboxgrassfixquestext = u8'Returns the grass from the single player game (effects in the settings should be medium +). After shutting down, you must restart the game to remove the grass completely!',
+		checkboxmoneyfontfix = u8' Removing Zeros in HUD',
+		checkboxmoneyfontfixquestext = u8'Removes zeros in HUD, instead of 000.000.350$ there will be 350$',
+		checkboxstarsondisplay = u8' Stars on the screen',
+		checkboxstarsondisplayquestext = u8'After enabling this feature, you must restart the game for the stars to appear on the screen.',
+		checkboxsensfix = u8' Mouse sensitivity fix',
+		checkboxsensfixquestext = u8'Corrects the sensitivity of the mouse along the X and Y axes.',
+		checkboxfixblackroads = u8' Fix black roads',
+		checkboxfixblackroadsquestext = u8'Fixes the display of black roads at low game settings.',
+		checkboxlongarmfix = u8' Fix long arms',
+		checkboxlongarmfixquestext = u8'Corrects stretching of the arms on two-wheeled vehicles.',
+		------------------------------------ [Other] --------------------------------------------
+		buttonclearchat = fa.ERASER..u8' Clear chat',
+		buttonclearchatitemhovered = u8'To quickly clear a chat\nenter the following command into the chat: ',
+		buttonssmode = fa.CAMERA..u8' SS Mode: ',
+		buttonssmodeitemhovered = u8'The function turns on the green screen\nConvenient when you take a screenshot of the situation',
+		buttonantiafk = fa.KEYBOARD..u8' AntiAFK: ',
+		buttonantiafkitemhovered = fa.EXCLAMATION..u8' The function turns on Anti-AFK\nif you don't need the game not to pause after\ncursing\n(Dangerous, because you can get banned!)',
+		buttongivebeer1 = fa.FIRE..u8' Get a bottle of beer',
+		buttongivebeer2 = fa.FIRE..u8' Get a bottle of beer 2',
+		buttongivesprunk = fa.FIRE..u8' Get Sprunk',
+		buttongivecigarette = fa.FIRE..u8' Get a cigarette',
+		buttonpiss = fa.WATER..u8' Piss',
+		buttonhidetextdraws = fa.EYE_SLASH..u8' Hide textdraws: ',
+		buttonhidetextdrawsitemhovered = u8'This function hides all textdraws\nNote: when this function is turned off, not all textdraws will be returned\nOnly those that are redrawn will be returned.'
+		------------------------------------ [Settings] --------------------------------------------
+		combochangetheme = fa.HOUSE..u8' Changing Theme:',
+		sliderroundthemequestext = u8'Changes the window's rounding value (default value is 4.0).',
+		sliderroundcompquestext = u8'Changes the rounding value of other window components such as buttons and so on (default value is 2.0).',
+		sliderroundmenuquestext = u8'Changes the rounding value of menu selections and childs (default value is 4.0).',
+		checkboxdialogstyle = u8' New dialog color',
+		checkboxdialogstylequestext = u8' Changes the color of dialog boxes similar to those on the Arizona RP launcher.',
+		buttonreloadscript = u8'Reload script ',
+		buttonturnoffscript = u8'Turn off script ',
+		
+	}
+}]]
+
+function translate(str)
+	return language[ini.settings.language + 1][str]
+end
+
+local created = false
+bi = false
+antiafk = false
 
 local int_item = new.int(ini.themesetting.theme-1)
 local item_list = {u8"Синяя", u8"Красная", u8"Коричневая", u8"Аква", u8"Черная", u8"Фиолетовая", u8"Черно-оранжевая", u8"Серая", u8"Вишневая", u8"Зеленая", u8"Пурпурная", u8"Темно-зеленая", u8"Оранжевая"}
@@ -217,10 +362,6 @@ local texincommands = {
 "Отображать надпись \"hp\" рядом с цифрами в ХП худе",
 "Изменяет цвет диалогов как на лаунчере Arizona RP",
 }
-
-local created = false
-bi = false
-antiafk = false
 
 ------------------------------------ [Клинер ёбаный блять] --------------------------------------------
 local function round(num, idp)
@@ -302,6 +443,7 @@ function riveryahello()
 	
 	local lastver = update():getLastVersion()
     if thisScript().version ~= lastver then
+		updatesavaliable = true
         sampRegisterChatCommand('riveryaupd', function()
             update():download()
         end)
@@ -317,13 +459,6 @@ function main()
     mynick = sampGetPlayerNickname(myid) -- наш ник крч
 	
 	gotofunc("all")--load all func
-	
-	local lastver = update():getLastVersion()
-	if thisScript().version ~= lastver then
-		versionold = u8'(не актуальная)'
-	else
-		versionold = u8'(актуальная)'
-	end
 	
 	for i = 1, #commands do
     	runSampfuncsConsoleCommand(commands[i])
@@ -666,6 +801,14 @@ local Frame = imgui.OnFrame(
 					save()
 					gotofunc("AnimationMoney")
 				end
+				imgui.Text(fa.CIRCLE_DOLLAR_TO_SLOT..u8" Стиль шрифта денег:")
+				imgui.SameLine()
+				imgui.Ques("Изменяет стиль шрифта денег если вам надоел оригинальный (стандартное значение 3).")
+				if imgui.SliderInt(u8"##MoneyFontStyle", sliders.moneyfontstyle, 0, 3) then
+					ini.settings.moneyfontstyle = sliders.moneyfontstyle[0]
+					save()
+                    gotofunc("MoneyFontStyle")
+				end
 				imgui.Text(fa.CLOUD_SUN_RAIN..u8" Прозрачность карты на радаре:")
 				imgui.SameLine()
 				imgui.Ques("Изменяет прозрачность карты на радаре. Сама карта в меню ESC будет обычной (значение от 0 до 255).")
@@ -923,6 +1066,69 @@ local Frame = imgui.OnFrame(
                 if imgui.IsItemHovered() then
                     imgui.SetTooltip(u8"Функция скрывает все текстдравы\nПримечание: после выключения данной функции будут возвращены не все текстдравы\nБудут возвращены лишь те что рисуются заново.")
                 end
+				imgui.Separator()
+				imgui.Text(fa.PAINT_ROLLER..u8' Кастомизация интерфейса (работает как говно, лучше не включать)')
+				if imgui.Checkbox(u8"Включить", checkboxes.recolorer) then
+					ini.settings.recolorer = checkboxes.recolorer[0]
+					save()
+					gotofunc("Recolorer")
+				end
+				if ini.settings.recolorer then
+					if imgui.ColorEdit3(u8"##Цвет полоски ХП", icolors.RECOLORER_HEALTH, imgui.ColorEditFlags.AlphaBar + imgui.ColorEditFlags.NoInputs) then
+						ini.RECOLORER_HEALTH.r, ini.RECOLORER_HEALTH.g, ini.RECOLORER_HEALTH.b = tonumber(("%.3f"):format(icolors.RECOLORER_HEALTH[0])), tonumber(("%.3f"):format(icolors.RECOLORER_HEALTH[1])), tonumber(("%.3f"):format(icolors.RECOLORER_HEALTH[2]))
+						save()
+						gotofunc("Recolorer")
+					end
+					imgui.SameLine() imgui.Text(u8"Цвет полоски здоровья")
+					if imgui.ColorEdit3(u8"##Цвет полоски брони", icolors.RECOLORER_ARMOUR, imgui.ColorEditFlags.AlphaBar + imgui.ColorEditFlags.NoInputs) then
+						ini.RECOLORER_ARMOUR.r, ini.RECOLORER_ARMOUR.g, ini.RECOLORER_ARMOUR.b = tonumber(("%.3f"):format(icolors.RECOLORER_ARMOUR[0])), tonumber(("%.3f"):format(icolors.RECOLORER_ARMOUR[1])), tonumber(("%.3f"):format(icolors.RECOLORER_ARMOUR[2]))
+						save()
+						gotofunc("Recolorer")
+					end
+					imgui.SameLine() imgui.Text(u8"Цвет полоски брони") 
+					if imgui.ColorEdit3(u8"##Цвет денег", icolors.RECOLORER_MONEY, imgui.ColorEditFlags.AlphaBar + imgui.ColorEditFlags.NoInputs) then
+						ini.RECOLORER_MONEY.r, ini.RECOLORER_MONEY.g, ini.RECOLORER_MONEY.b = tonumber(("%.3f"):format(icolors.RECOLORER_MONEY[0])), tonumber(("%.3f"):format(icolors.RECOLORER_MONEY[1])), tonumber(("%.3f"):format(icolors.RECOLORER_MONEY[2]))
+						save()
+						gotofunc("Recolorer")
+					end
+					imgui.SameLine() imgui.Text(u8"Цвет денег") 
+					if imgui.ColorEdit3(u8"##Цвет звезд", icolors.RECOLORER_STARS, imgui.ColorEditFlags.AlphaBar + imgui.ColorEditFlags.NoInputs) then
+						ini.RECOLORER_STARS.r, ini.RECOLORER_STARS.g, ini.RECOLORER_STARS.b = tonumber(("%.3f"):format(icolors.RECOLORER_STARS[0])), tonumber(("%.3f"):format(icolors.RECOLORER_STARS[1])), tonumber(("%.3f"):format(icolors.RECOLORER_STARS[2]))
+						save()
+						gotofunc("Recolorer")
+					end
+					imgui.SameLine() imgui.Text(u8"Цвет звезд") 
+					if imgui.ColorEdit3(u8"##Цвет патронов", icolors.RECOLORER_PATRONS, imgui.ColorEditFlags.AlphaBar + imgui.ColorEditFlags.NoInputs) then
+						ini.RECOLORER_PATRONS.r, ini.RECOLORER_PATRONS.g, ini.RECOLORER_PATRONS.b = tonumber(("%.3f"):format(icolors.RECOLORER_PATRONS[0])), tonumber(("%.3f"):format(icolors.RECOLORER_PATRONS[1])), tonumber(("%.3f"):format(icolors.RECOLORER_PATRONS[2]))
+						save()
+						gotofunc("Recolorer")
+					end
+					imgui.SameLine() imgui.Text(u8"Цвет кол-ва патронов")
+					if imgui.ColorEdit3(u8"##Цвет хп игроков", icolors.RECOLORER_PLAYERHEALTH, imgui.ColorEditFlags.AlphaBar + imgui.ColorEditFlags.NoInputs) then
+						ini.RECOLORER_PLAYERHEALTH.r, ini.RECOLORER_PLAYERHEALTH.g, ini.RECOLORER_PLAYERHEALTH.b = tonumber(("%.3f"):format(icolors.RECOLORER_PLAYERHEALTH[0])), tonumber(("%.3f"):format(icolors.RECOLORER_PLAYERHEALTH[1])), tonumber(("%.3f"):format(icolors.RECOLORER_PLAYERHEALTH[2]))
+						save()
+						gotofunc("Recolorer")
+					end
+					imgui.SameLine() imgui.Text(u8"Цвет полоски хп игроков")
+					if imgui.ColorEdit3(u8"##Цвет хп игроков фон", icolors.RECOLORER_PLAYERHEALTH2, imgui.ColorEditFlags.AlphaBar + imgui.ColorEditFlags.NoInputs) then
+						ini.RECOLORER_PLAYERHEALTH2.r, ini.RECOLORER_PLAYERHEALTH2.g, ini.RECOLORER_PLAYERHEALTH2.b = tonumber(("%.3f"):format(icolors.RECOLORER_PLAYERHEALTH2[0])), tonumber(("%.3f"):format(icolors.RECOLORER_PLAYERHEALTH2[1])), tonumber(("%.3f"):format(icolors.RECOLORER_PLAYERHEALTH2[2]))
+						save()
+						gotofunc("Recolorer")
+					end
+					imgui.SameLine() imgui.Text(u8"Цвет полоски хп игроков фон")
+					if imgui.ColorEdit3(u8"##Цвет брони игроков", icolors.RECOLORER_PLAYERARMOR, imgui.ColorEditFlags.AlphaBar + imgui.ColorEditFlags.NoInputs) then
+						ini.RECOLORER_PLAYERARMOR.r, ini.RECOLORER_PLAYERARMOR.g, ini.RECOLORER_PLAYERARMOR.b = tonumber(("%.3f"):format(icolors.RECOLORER_PLAYERARMOR[0])), tonumber(("%.3f"):format(icolors.RECOLORER_PLAYERARMOR[1])), tonumber(("%.3f"):format(icolors.RECOLORER_PLAYERARMOR[2]))
+						save()
+						gotofunc("Recolorer")
+					end
+					imgui.SameLine() imgui.Text(u8"Цвет полоски брони игроков")
+					if imgui.ColorEdit3(u8"##Цвет брони игроков фон", icolors.RECOLORER_PLAYERARMOR2, imgui.ColorEditFlags.AlphaBar + imgui.ColorEditFlags.NoInputs) then
+						ini.RECOLORER_PLAYERARMOR2.r, ini.RECOLORER_PLAYERARMOR2.g, ini.RECOLORER_PLAYERARMOR2.b = tonumber(("%.3f"):format(icolors.RECOLORER_PLAYERARMOR2[0])), tonumber(("%.3f"):format(icolors.RECOLORER_PLAYERARMOR2[1])), tonumber(("%.3f"):format(icolors.RECOLORER_PLAYERARMOR2[2]))
+						save()
+						gotofunc("Recolorer")
+					end
+					imgui.SameLine() imgui.Text(u8"Цвет полоски брони игроков фон")
+				end
 				
 				imgui.Separator()
 				imgui.Text(fa.DATABASE..u8' Команды скрипта (большая часть возможно не работает)')
@@ -980,6 +1186,21 @@ local Frame = imgui.OnFrame(
 					sampAddChatMessage(script_name..'{FFFFFF} Скрипт был выгружен из-за нажатия кнопки {DC4747}"Выключить скрипт"{FFFFFF}!', 0x73b461)
 					thisScript():unload() 
 				end
+				
+				if updatesavaliable then
+					versionold = u8'(не актуальная)'
+					imgui.SameLine()
+					if imgui.Button(u8'Скачать обновление '..fa.DOWNLOAD..'', imgui.ImVec2(150, 0)) then
+						update():download()
+					end
+				else
+					versionold = u8'(актуальная)'
+					imgui.SameLine()
+					if imgui.Button(u8'Проверить обновление '..fa.DOWNLOAD..'', imgui.ImVec2(165, 0)) then
+						sampAddChatMessage(script_name.."{FFFFFF} У вас установлена самая последняя версия скрипта!", 0x73b461)
+					end
+				end
+				
 				imgui.Separator()
 				
 				local _, myid = sampGetPlayerIdByCharHandle(playerPed)
@@ -1161,6 +1382,7 @@ function gotofunc(fnc)
         memory.write(0x745BC9, 0x9090, 2, false) --SADisplayResolutions(1920x1080// 16:9)
         memory.fill(0x460773, 0x90, 7, false) --CJFix
         memory.setuint32(12761548, 1051965045, false) -- car speed fps fix
+		memory.setint8(0x58D3DA, 1, true) -- Меняет размер обводки displayGameText
         ---------------------------------------------
         if get_samp_version() == "r1" then
             memory.write(sampGetBase() + 0x64ACA, 0xFB, 1, true) --Min FontSize -5
@@ -1184,6 +1406,11 @@ function gotofunc(fnc)
         mainFrame[0] = not mainFrame[0]
 	end
 	-----------------------Главная-----------------------
+	if fnc == "MoneyFontStyle" or fnc == "all" then
+        if ini.settings.moneyfontstyle then
+            memory.setint8(0x58F57F, ini.settings.moneyfontstyle, true)
+        end
+    end
     if fnc == "AlphaMap" or fnc == "all" then
         if ini.settings.alphamap then
             editRadarMapColor(ini.settings.alphamap)
@@ -1347,6 +1574,30 @@ function gotofunc(fnc)
 			setDialogColor(0xCC000000, 0xCC000000, 0xCC000000, 0xCC000000)
 		end
 	end
+	if fnc == "Recolorer" or fnc == "all" then
+        if ini.settings.recolorer then
+            memory.write(0xBAB22C, ("0xFF%06X"):format(join_argb(0, ini.RECOLORER_HEALTH.b*255, ini.RECOLORER_HEALTH.g*255, ini.RECOLORER_HEALTH.r*255)), 4, false)
+            memory.write(0xBAB230, ("0xFF%06X"):format(join_argb(0, ini.RECOLORER_MONEY.b*255, ini.RECOLORER_MONEY.g*255, ini.RECOLORER_MONEY.r*255)), 4, false)
+            memory.write(0xBAB244, ("0xFF%06X"):format(join_argb(0, ini.RECOLORER_STARS.b*255, ini.RECOLORER_STARS.g*255, ini.RECOLORER_STARS.r*255)), 4, false)
+            memory.write(0xBAB23C, ("0xFF%06X"):format(join_argb(0, ini.RECOLORER_ARMOUR.b*255, ini.RECOLORER_ARMOUR.g*255, ini.RECOLORER_ARMOUR.r*255)), 4, false)
+            memory.write(0xBAB238, ("0xFF%06X"):format(join_argb(0, ini.RECOLORER_PATRONS.b*255, ini.RECOLORER_PATRONS.g*255, ini.RECOLORER_PATRONS.r*255)), 4, false)
+
+            memory.setuint32(sampGetBase() + ((get_samp_version() == "r1") and 0x68B0C or 0x6CA7C), ("0xFF%06X"):format(join_argb(0, ini.RECOLORER_PLAYERHEALTH.r*255, ini.RECOLORER_PLAYERHEALTH.g*255, ini.RECOLORER_PLAYERHEALTH.b*255)), true) -- полная полоска хп
+            memory.setuint32(sampGetBase() + ((get_samp_version() == "r1") and 0x68B33 or 0x6CAA3), ("0xFF%06X"):format(join_argb(0, ini.RECOLORER_PLAYERHEALTH2.r*255, ini.RECOLORER_PLAYERHEALTH2.g*255, ini.RECOLORER_PLAYERHEALTH2.b*255)), true) -- задний фон
+
+            memory.setuint32(sampGetBase() + ((get_samp_version() == "r1") and 0x68DD5 or 0x6CD45), ("0xFF%06X"):format(join_argb(0, ini.RECOLORER_PLAYERARMOR.r*255, ini.RECOLORER_PLAYERARMOR.g*255, ini.RECOLORER_PLAYERARMOR.b*255)), true) -- полная полоска брони
+            memory.setuint32(sampGetBase() + ((get_samp_version() == "r1") and 0x68E00 or 0x6CD70), ("0xFF%06X"):format(join_argb(0, ini.RECOLORER_PLAYERARMOR2.r*255, ini.RECOLORER_PLAYERARMOR2.g*255, ini.RECOLORER_PLAYERARMOR2.b*255)), true) -- задний фон
+        else
+            writeMemory(0xBAB22C, 4, -14870092, true)
+            writeMemory(0xBAB230, 4, -13866954, true)
+            writeMemory(0xBAB244, 4, -15703408, true)
+            writeMemory(0xBAB23C, 4, -1973791, true)
+            writeMemory(0xBAB238, 4, -930900, true)
+
+            writeMemory(sampGetBase() + ((get_samp_version() == "r1") and 0x68B0C or 0x6CA7C), 4, -2088157, true)
+            writeMemory(sampGetBase() + ((get_samp_version() == "r1") and 0x68B33 or 0x6CAA3), 4, -2109489, true)
+        end
+    end
 end
 
 function imgui.Ques(text)
