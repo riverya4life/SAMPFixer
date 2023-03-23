@@ -9,4 +9,4 @@
 - Кастомизация интерфейса скрипта
 
 # Установка
-- Файл samp.lua и папки resource и lib поместить в папку moonloader (если требует заменить - заменяйте)
+- Файл [samp.lua](https://github.com/riverya4life/SAMPFixer/blob/main/samp.lua) и папки [resource](https://github.com/riverya4life/SAMPFixer/tree/main/resource) и [lib](https://github.com/riverya4life/SAMPFixer/tree/main/lib) поместить в папку moonloader (если требует заменить - заменяйте)
