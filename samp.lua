@@ -1,6 +1,6 @@
 script_name = "[SAMPFixer]"
 script_author = "riverya4life."
-script_version(0.7)
+script_version(0.8)
 
 --==================================== [ Information for Users or scripters ] ====================================--
 --[[ Thanks to Black Jesus for cleo GameFixer 2.0 and Gorskin for lua GameFixer 3.1 (memory addresses) 
@@ -27,16 +27,16 @@ local ffi = require("ffi")
 encoding.default = 'CP1251'
 u8 = encoding.UTF8
 
--- Описание персонажа by Cosmo
+-- ГЋГЇГЁГ±Г Г­ГЁГҐ ГЇГҐГ°Г±Г®Г­Г Г¦Г  by Cosmo
 local active = nil
 local pool = {}
 -- Message if the description does not exist:
-no_description_text = "* Описание отсутствует *"
+no_description_text = "* ГЋГЇГЁГ±Г Г­ГЁГҐ Г®ГІГ±ГіГІГ±ГІГўГіГҐГІ *"
 
 --- Config fastmap by Gorskin
 reduceZoom = true
 
-------------------------[ конфиг нахуй блять ] -------------------
+------------------------[ ГЄГ®Г­ГґГЁГЈ Г­Г ГµГіГ© ГЎГ«ГїГІГј ] -------------------
 local inicfg = require "inicfg"
 local directIni = "samp.ini"
 
@@ -138,7 +138,7 @@ local dragging = false
 local dragX, dragY = 0, 0
 local CDialog, CDXUTDialog = 0, 0
 
--- Остальное
+-- ГЋГ±ГІГ Г«ГјГ­Г®ГҐ
 local onspawned = false
 local offspawnchecker = true
 local bscreen = false
@@ -215,33 +215,33 @@ local buffers = {
 }
 
 local imguiCheckboxesFixesAndPatches = {
-    [u8" Исправление крови при повреждении дерева"] = {var = checkboxes.fixbloodwood, cfg = "fixbloodwood", fnc = "FixBloodWood"},
-    [u8" Cнять лимит на ограничение денег в худе"] = {var = checkboxes.nolimitmoneyhud, cfg = "nolimitmoneyhud", fnc = "NoLimitMoneyHud"},
-    [u8" Вернуть солнце"] = {var = checkboxes.sunfix, cfg = "sunfix", fnc = "SunFix"},
-    [u8" Вернуть траву"] = {var = checkboxes.grassfix, cfg = "grassfix", fnc = "GrassFix"},
-    [u8" Вернуть названия районов"] = {var = checkboxes.placename, cfg = "placename", fnc = "_"},
-    [u8" Удаление нулей в худе"] = {var = checkboxes.moneyfontfix, cfg = "moneyfontfix", fnc = "MoneyFontFix"},
-    [u8" Звёзды на экране"] = {var = checkboxes.starsondisplay, cfg = "starsondisplay", fnc = "StarsOnDisplay"},
-    [u8" Фикс чувствительности мышки"] = {var = checkboxes.sensfix, cfg = "sensfix", fnc = "FixSensitivity"},
-    [u8" Анимации при бездействии"] = {var = checkboxes.animidle, cfg = "animidle", fnc = "_"},
-    [u8" Фикс чёрных дорог"] = {var = checkboxes.fixblackroads, cfg = "fixblackroads", fnc = "FixBlackRoads"},
-    [u8" Фикс длинных рук"] = {var = checkboxes.longarmfix, cfg = "longarmfix", fnc = "FixLongArm"},
-	[u8" Исправление бега в интерьерах"] = {var = checkboxes.intrun, cfg = "intrun", fnc = "InteriorRun"},
-	[u8" Исправление белой точки на прицеле"] = {var = checkboxes.fixcrosshair, cfg = "fixcrosshair", fnc = "FixCrosshair"},
+    [u8" Г€Г±ГЇГ°Г ГўГ«ГҐГ­ГЁГҐ ГЄГ°Г®ГўГЁ ГЇГ°ГЁ ГЇГ®ГўГ°ГҐГ¦Г¤ГҐГ­ГЁГЁ Г¤ГҐГ°ГҐГўГ "] = {var = checkboxes.fixbloodwood, cfg = "fixbloodwood", fnc = "FixBloodWood"},
+    [u8" CГ­ГїГІГј Г«ГЁГ¬ГЁГІ Г­Г  Г®ГЈГ°Г Г­ГЁГ·ГҐГ­ГЁГҐ Г¤ГҐГ­ГҐГЈ Гў ГµГіГ¤ГҐ"] = {var = checkboxes.nolimitmoneyhud, cfg = "nolimitmoneyhud", fnc = "NoLimitMoneyHud"},
+    [u8" Г‚ГҐГ°Г­ГіГІГј Г±Г®Г«Г­Г¶ГҐ"] = {var = checkboxes.sunfix, cfg = "sunfix", fnc = "SunFix"},
+    [u8" Г‚ГҐГ°Г­ГіГІГј ГІГ°Г ГўГі"] = {var = checkboxes.grassfix, cfg = "grassfix", fnc = "GrassFix"},
+    [u8" Г‚ГҐГ°Г­ГіГІГј Г­Г Г§ГўГ Г­ГЁГї Г°Г Г©Г®Г­Г®Гў"] = {var = checkboxes.placename, cfg = "placename", fnc = "_"},
+    [u8" Г“Г¤Г Г«ГҐГ­ГЁГҐ Г­ГіГ«ГҐГ© Гў ГµГіГ¤ГҐ"] = {var = checkboxes.moneyfontfix, cfg = "moneyfontfix", fnc = "MoneyFontFix"},
+    [u8" Г‡ГўВёГ§Г¤Г» Г­Г  ГЅГЄГ°Г Г­ГҐ"] = {var = checkboxes.starsondisplay, cfg = "starsondisplay", fnc = "StarsOnDisplay"},
+    [u8" Г”ГЁГЄГ± Г·ГіГўГ±ГІГўГЁГІГҐГ«ГјГ­Г®Г±ГІГЁ Г¬Г»ГёГЄГЁ"] = {var = checkboxes.sensfix, cfg = "sensfix", fnc = "FixSensitivity"},
+    [u8" ГЂГ­ГЁГ¬Г Г¶ГЁГЁ ГЇГ°ГЁ ГЎГҐГ§Г¤ГҐГ©Г±ГІГўГЁГЁ"] = {var = checkboxes.animidle, cfg = "animidle", fnc = "_"},
+    [u8" Г”ГЁГЄГ± Г·ВёГ°Г­Г»Гµ Г¤Г®Г°Г®ГЈ"] = {var = checkboxes.fixblackroads, cfg = "fixblackroads", fnc = "FixBlackRoads"},
+    [u8" Г”ГЁГЄГ± Г¤Г«ГЁГ­Г­Г»Гµ Г°ГіГЄ"] = {var = checkboxes.longarmfix, cfg = "longarmfix", fnc = "FixLongArm"},
+	[u8" Г€Г±ГЇГ°Г ГўГ«ГҐГ­ГЁГҐ ГЎГҐГЈГ  Гў ГЁГ­ГІГҐГ°ГјГҐГ°Г Гµ"] = {var = checkboxes.intrun, cfg = "intrun", fnc = "InteriorRun"},
+	[u8" Г€Г±ГЇГ°Г ГўГ«ГҐГ­ГЁГҐ ГЎГҐГ«Г®Г© ГІГ®Г·ГЄГЁ Г­Г  ГЇГ°ГЁГ¶ГҐГ«ГҐ"] = {var = checkboxes.fixcrosshair, cfg = "fixcrosshair", fnc = "FixCrosshair"},
 }
 
 local imguiInputsCmdEditor = {
-    [u8" Открыть меню скрипта"] = {var = buffers.cmd_openmenu, cfg = "openmenu"},
-    [u8" Показать ники"] = {var = buffers.cmd_shownicks, cfg = "shownicks"},
-    [u8" Показать ХП игроков"] = {var = buffers.cmd_showhp, cfg = "showhp"},
-    [u8" Очистить чат"] = {var = buffers.cmd_clearchat, cfg = "clearchat"},
-    [u8" Показать/скрыть чат"] = {var = buffers.cmd_showchat, cfg = "showchat"},
-    [u8" Показать/скрыть HUD"] = {var = buffers.cmd_showhud, cfg = "showhud"},
-    [u8" Новый цвет диалоговых окон"] = {var = buffers.cmd_dialogstyle, cfg = "dialogstyle"},
+    [u8" ГЋГІГЄГ°Г»ГІГј Г¬ГҐГ­Гѕ Г±ГЄГ°ГЁГЇГІГ "] = {var = buffers.cmd_openmenu, cfg = "openmenu"},
+    [u8" ГЏГ®ГЄГ Г§Г ГІГј Г­ГЁГЄГЁ"] = {var = buffers.cmd_shownicks, cfg = "shownicks"},
+    [u8" ГЏГ®ГЄГ Г§Г ГІГј Г•ГЏ ГЁГЈГ°Г®ГЄГ®Гў"] = {var = buffers.cmd_showhp, cfg = "showhp"},
+    [u8" ГЋГ·ГЁГ±ГІГЁГІГј Г·Г ГІ"] = {var = buffers.cmd_clearchat, cfg = "clearchat"},
+    [u8" ГЏГ®ГЄГ Г§Г ГІГј/Г±ГЄГ°Г»ГІГј Г·Г ГІ"] = {var = buffers.cmd_showchat, cfg = "showchat"},
+    [u8" ГЏГ®ГЄГ Г§Г ГІГј/Г±ГЄГ°Г»ГІГј HUD"] = {var = buffers.cmd_showhud, cfg = "showhud"},
+    [u8" ГЌГ®ГўГ»Г© Г¶ГўГҐГІ Г¤ГЁГ Г«Г®ГЈГ®ГўГ»Гµ Г®ГЄГ®Г­"] = {var = buffers.cmd_dialogstyle, cfg = "dialogstyle"},
 }
 
 -- Language
---[[local languageNames = {'English', u8'Українська', u8'Русский'}
+--[[local languageNames = {'English', u8'Г“ГЄГ°Г ВїГ­Г±ГјГЄГ ', u8'ГђГіГ±Г±ГЄГЁГ©'}
 local languageIndex = new.int(ini.main.languageIndex)
 local language = {
 	[1] = {
@@ -249,7 +249,7 @@ local language = {
 		tab1 = fa.HOUSE..u8' Home',
 		tab2 = fa.DESKTOP..u8' Boost FPS', 
 		tab3 = fa.GEAR..u8' Fixes', 
-		tab4 = fa.GAMEPAD..u8' Прочее', 
+		tab4 = fa.GAMEPAD..u8' ГЏГ°Г®Г·ГҐГҐ', 
 		tab5 = fa.BARS..u8' Other',
 		------------------------------------ [Settings] --------------------------------------------
 		switchoff = u8'Switch off',
@@ -352,14 +352,14 @@ local language = {
 
 --[[-- Language
 local languageint = new.int(ini.main.language-1)
-local languagelist = {u8'Русский', u8'English', u8'Українська'}
+local languagelist = {u8'ГђГіГ±Г±ГЄГЁГ©', u8'English', u8'Г“ГЄГ°Г ВїГ­Г±ГјГЄГ '}
 local languageitems = new['const char*'][#languagelist](languagelist)
 
 local language = {
 	[1] = {
-		textTest = u8'Баланс заполнен',
-		textTest2 = u8'Майнить',
-		textChooseLanguage = u8'Выберите язык',
+		textTest = u8'ГЃГ Г«Г Г­Г± Г§Г ГЇГ®Г«Г­ГҐГ­',
+		textTest2 = u8'ГЊГ Г©Г­ГЁГІГј',
+		textChooseLanguage = u8'Г‚Г»ГЎГҐГ°ГЁГІГҐ ГїГ§Г»ГЄ',
 	},
 	[2] = {
 		textTest = u8'Balance is full',
@@ -367,9 +367,9 @@ local language = {
 		textChooseLanguage = u8'Choose language',
 	},
 	[3] = {
-		textTest = u8'Баланс заповнений',
-		textTest2 = u8'Майнити',
-		textChooseLanguage = u8'Оберіть мову',
+		textTest = u8'ГЃГ Г«Г Г­Г± Г§Г ГЇГ®ГўГ­ГҐГ­ГЁГ©',
+		textTest2 = u8'ГЊГ Г©Г­ГЁГІГЁ',
+		textChooseLanguage = u8'ГЋГЎГҐГ°ВіГІГј Г¬Г®ГўГі',
 	}
 }
 
@@ -383,42 +383,42 @@ bi = false
 antiafk = false
 
 local int_item = new.int(ini.themesetting.theme-1)
-local item_list = {u8"Синяя", u8"Красная", u8"Коричневая", u8"Аква", u8"Черная", u8"Фиолетовая", u8"Черно-оранжевая", u8"Серая", u8"Вишневая", u8"Зеленая", u8"Пурпурная", u8"Темно-зеленая", u8"Оранжевая"}
+local item_list = {u8"Г‘ГЁГ­ГїГї", u8"ГЉГ°Г Г±Г­Г Гї", u8"ГЉГ®Г°ГЁГ·Г­ГҐГўГ Гї", u8"ГЂГЄГўГ ", u8"Г—ГҐГ°Г­Г Гї", u8"Г”ГЁГ®Г«ГҐГІГ®ГўГ Гї", u8"Г—ГҐГ°Г­Г®-Г®Г°Г Г­Г¦ГҐГўГ Гї", u8"Г‘ГҐГ°Г Гї", u8"Г‚ГЁГёГ­ГҐГўГ Гї", u8"Г‡ГҐГ«ГҐГ­Г Гї", u8"ГЏГіГ°ГЇГіГ°Г­Г Гї", u8"Г’ГҐГ¬Г­Г®-Г§ГҐГ«ГҐГ­Г Гї", u8"ГЋГ°Г Г­Г¦ГҐГўГ Гї"}
 local ImItems = new['const char*'][#item_list](item_list)
 
 local tab = new.int(1)
-local tabs = {fa.HOUSE..u8'\tГлавная', fa.DESKTOP..u8'\tBoost FPS', fa.GEAR..u8'\tИсправления', fa.LEAF..u8'\tПрочее', fa.BARS..u8'\tНастройки',
+local tabs = {fa.HOUSE..u8'\tГѓГ«Г ГўГ­Г Гї', fa.DESKTOP..u8'\tBoost FPS', fa.GEAR..u8'\tГ€Г±ГЇГ°Г ГўГ«ГҐГ­ГЁГї', fa.LEAF..u8'\tГЏГ°Г®Г·ГҐГҐ', fa.BARS..u8'\tГЌГ Г±ГІГ°Г®Г©ГЄГЁ',
 }
 
 local ivar = new.int(ini.main.animmoney-1)
 local tbmtext = {
-    u8"Быстрая",
-    u8"Без анимации",
-    u8"Стандартная",
+    u8"ГЃГ»Г±ГІГ°Г Гї",
+    u8"ГЃГҐГ§ Г Г­ГЁГ¬Г Г¶ГЁГЁ",
+    u8"Г‘ГІГ Г­Г¤Г Г°ГІГ­Г Гї",
 }
 local tmtext = new['const char*'][#tbmtext](tbmtext)
 
 local texincommands = {
-"Показать/Скрыть ники игроков",
-"Показать/Скрыть ХП игроков",
-"Включить/Выключить радио в транспорте",
-"Включить/Выключить удаление всего оружия на \"DELETE\"",
-"Очистить чат",
-"Показать/Скрыть чат",
-"Показать/Скрыть HUD",
-"Изменить время",
-"Изменить погоду",
-"Включить/Выключить изменение прорисовки",
-"Изменить прорисовку",
-"Включить/Выключить полоску 160hp",
-"Включить/Выключить показатель ХП в цифрах",
-"Изменить положение показателя ХП в цифрах",
-"Изменить стиль показателя ХП в цифрах",
-"Отображать надпись \"hp\" рядом с цифрами в ХП худе",
-"Изменяет цвет диалогов как на лаунчере Arizona RP",
+"ГЏГ®ГЄГ Г§Г ГІГј/Г‘ГЄГ°Г»ГІГј Г­ГЁГЄГЁ ГЁГЈГ°Г®ГЄГ®Гў",
+"ГЏГ®ГЄГ Г§Г ГІГј/Г‘ГЄГ°Г»ГІГј Г•ГЏ ГЁГЈГ°Г®ГЄГ®Гў",
+"Г‚ГЄГ«ГѕГ·ГЁГІГј/Г‚Г»ГЄГ«ГѕГ·ГЁГІГј Г°Г Г¤ГЁГ® Гў ГІГ°Г Г­Г±ГЇГ®Г°ГІГҐ",
+"Г‚ГЄГ«ГѕГ·ГЁГІГј/Г‚Г»ГЄГ«ГѕГ·ГЁГІГј ГіГ¤Г Г«ГҐГ­ГЁГҐ ГўГ±ГҐГЈГ® Г®Г°ГіГ¦ГЁГї Г­Г  \"DELETE\"",
+"ГЋГ·ГЁГ±ГІГЁГІГј Г·Г ГІ",
+"ГЏГ®ГЄГ Г§Г ГІГј/Г‘ГЄГ°Г»ГІГј Г·Г ГІ",
+"ГЏГ®ГЄГ Г§Г ГІГј/Г‘ГЄГ°Г»ГІГј HUD",
+"Г€Г§Г¬ГҐГ­ГЁГІГј ГўГ°ГҐГ¬Гї",
+"Г€Г§Г¬ГҐГ­ГЁГІГј ГЇГ®ГЈГ®Г¤Гі",
+"Г‚ГЄГ«ГѕГ·ГЁГІГј/Г‚Г»ГЄГ«ГѕГ·ГЁГІГј ГЁГ§Г¬ГҐГ­ГҐГ­ГЁГҐ ГЇГ°Г®Г°ГЁГ±Г®ГўГЄГЁ",
+"Г€Г§Г¬ГҐГ­ГЁГІГј ГЇГ°Г®Г°ГЁГ±Г®ГўГЄГі",
+"Г‚ГЄГ«ГѕГ·ГЁГІГј/Г‚Г»ГЄГ«ГѕГ·ГЁГІГј ГЇГ®Г«Г®Г±ГЄГі 160hp",
+"Г‚ГЄГ«ГѕГ·ГЁГІГј/Г‚Г»ГЄГ«ГѕГ·ГЁГІГј ГЇГ®ГЄГ Г§Г ГІГҐГ«Гј Г•ГЏ Гў Г¶ГЁГґГ°Г Гµ",
+"Г€Г§Г¬ГҐГ­ГЁГІГј ГЇГ®Г«Г®Г¦ГҐГ­ГЁГҐ ГЇГ®ГЄГ Г§Г ГІГҐГ«Гї Г•ГЏ Гў Г¶ГЁГґГ°Г Гµ",
+"Г€Г§Г¬ГҐГ­ГЁГІГј Г±ГІГЁГ«Гј ГЇГ®ГЄГ Г§Г ГІГҐГ«Гї Г•ГЏ Гў Г¶ГЁГґГ°Г Гµ",
+"ГЋГІГ®ГЎГ°Г Г¦Г ГІГј Г­Г Г¤ГЇГЁГ±Гј \"hp\" Г°ГїГ¤Г®Г¬ Г± Г¶ГЁГґГ°Г Г¬ГЁ Гў Г•ГЏ ГµГіГ¤ГҐ",
+"Г€Г§Г¬ГҐГ­ГїГҐГІ Г¶ГўГҐГІ Г¤ГЁГ Г«Г®ГЈГ®Гў ГЄГ ГЄ Г­Г  Г«Г ГіГ­Г·ГҐГ°ГҐ Arizona RP",
 }
 
------------------------------------- [Клинер ёбаный блять] --------------------------------------------
+------------------------------------ [ГЉГ«ГЁГ­ГҐГ° ВёГЎГ Г­Г»Г© ГЎГ«ГїГІГј] --------------------------------------------
 local function round(num, idp)
     local mult = 10 ^ (idp or 0)
     return math.floor(num * mult + 0.5) / mult
@@ -432,10 +432,10 @@ end
 function setDialogColor(l_up, r_up, l_low, r_bottom) --by stereoliza (https://www.blast.hk/threads/13380/post-621933)
     local CDialog = memory.getuint32(getModuleHandle("samp.dll") + 0x21A0B8)
     local CDXUTDialog = memory.getuint32(CDialog + 0x1C)
-    memory.setuint32(CDXUTDialog + 0x12A, l_up, true) -- Левый угол
-    memory.setuint32(CDXUTDialog + 0x12E, r_up, true) -- Правый верхний угол
-    memory.setuint32(CDXUTDialog + 0x132, l_low, true) -- Нижний левый угол
-    memory.setuint32(CDXUTDialog + 0x136, r_bottom, true) -- Правый нижний угол
+    memory.setuint32(CDXUTDialog + 0x12A, l_up, true) -- Г‹ГҐГўГ»Г© ГіГЈГ®Г«
+    memory.setuint32(CDXUTDialog + 0x12E, r_up, true) -- ГЏГ°Г ГўГ»Г© ГўГҐГ°ГµГ­ГЁГ© ГіГЈГ®Г«
+    memory.setuint32(CDXUTDialog + 0x132, l_low, true) -- ГЌГЁГ¦Г­ГЁГ© Г«ГҐГўГ»Г© ГіГЈГ®Г«
+    memory.setuint32(CDXUTDialog + 0x136, r_bottom, true) -- ГЏГ°Г ГўГ»Г© Г­ГЁГ¦Г­ГЁГ© ГіГЈГ®Г«
 end
 
 function get_samp_version()
@@ -462,7 +462,7 @@ function get_samp_version()
 
     return "unknown"
 end
------------------------------------------- [анимация бездействия by vegas~ (https://www.blast.hk/threads/151523/)]
+------------------------------------------ [Г Г­ГЁГ¬Г Г¶ГЁГї ГЎГҐГ§Г¤ГҐГ©Г±ГІГўГЁГї by vegas~ (https://www.blast.hk/threads/151523/)]
 local player = {
     mainTime = 0,
     time = 0,
@@ -517,13 +517,13 @@ player.thePlayer = function()
     end
 
 end
------------------------------------------- [анимация бездействия by vegas~ (https://www.blast.hk/threads/151523/)]
+------------------------------------------ [Г Г­ГЁГ¬Г Г¶ГЁГї ГЎГҐГ§Г¤ГҐГ©Г±ГІГўГЁГї by vegas~ (https://www.blast.hk/threads/151523/)]
 local ui_meta = {
     __index = function(self, v)
         if v == "switch" then
             local switch = function()
                 if self.process and self.process:status() ~= "dead" then
-                    return false -- // Предыдущая анимация ещё не завершилась!
+                    return false -- // ГЏГ°ГҐГ¤Г»Г¤ГіГ№Г Гї Г Г­ГЁГ¬Г Г¶ГЁГї ГҐГ№Вё Г­ГҐ Г§Г ГўГҐГ°ГёГЁГ«Г Г±Гј!
                 end
                 self.timer = os.clock()
                 self.state = not self.state
@@ -544,7 +544,7 @@ local ui_meta = {
                         if a == 1.00 then break end
                     end
                 end)
-                return true -- // Состояние окна изменено!
+                return true -- // Г‘Г®Г±ГІГ®ГїГ­ГЁГҐ Г®ГЄГ­Г  ГЁГ§Г¬ГҐГ­ГҐГ­Г®!
             end
             return switch
         end
@@ -608,21 +608,21 @@ function update() -- by chapo (https://www.blast.hk/threads/114312/)
         local response = requests.get(raw)
         if response.status_code == 200 then
             downloadUrlToFile(decodeJson(response.text)['url'], thisScript().path, function (id, status, p1, p2)
-                print('Скачиваю '..decodeJson(response.text)['url']..' в '..thisScript().path)
+                print('Г‘ГЄГ Г·ГЁГўГ Гѕ '..decodeJson(response.text)['url']..' Гў '..thisScript().path)
                 if status == dlstatus.STATUSEX_ENDDOWNLOAD then
-                    sampAddChatMessage('Скрипт {42B166}успешно обновлен{ffffff}! Перезагрузка...', -1)
+                    sampAddChatMessage('Г‘ГЄГ°ГЁГЇГІ {42B166}ГіГ±ГЇГҐГёГ­Г® Г®ГЎГ­Г®ГўГ«ГҐГ­{ffffff}! ГЏГҐГ°ГҐГ§Г ГЈГ°ГіГ§ГЄГ ...', -1)
                     thisScript():reload()
                 end
             end)
         else
-            sampAddChatMessage('{dc4747}[Ошибка]{ffffff} Невозможно установить обновление! Код ошибки: {dc4747}'..response.status_code, -1)
+            sampAddChatMessage('{dc4747}[ГЋГёГЁГЎГЄГ ]{ffffff} ГЌГҐГўГ®Г§Г¬Г®Г¦Г­Г® ГіГ±ГІГ Г­Г®ГўГЁГІГј Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ! ГЉГ®Г¤ Г®ГёГЁГЎГЄГЁ: {dc4747}'..response.status_code, -1)
         end
     end
     return f
 end
 
 function riveryahello()
-	sampAddChatMessage(script_name.."{FFFFFF} Загружен! Открыть меню: {dc4747}F2 {FFFFFF}или {dc4747}"..ini.commands.openmenu..". {FFFFFF}Автор: {dc4747}"..script_author, 0x73b461)
+	sampAddChatMessage(script_name.."{FFFFFF} Г‡Г ГЈГ°ГіГ¦ГҐГ­! ГЋГІГЄГ°Г»ГІГј Г¬ГҐГ­Гѕ: {dc4747}F2 {FFFFFF}ГЁГ«ГЁ {dc4747}"..ini.commands.openmenu..". {FFFFFF}ГЂГўГІГ®Г°: {dc4747}"..script_author, 0x73b461)
 	
 	local lastver = update():getLastVersion()
     if thisScript().version ~= lastver then
@@ -630,7 +630,7 @@ function riveryahello()
         sampRegisterChatCommand('riveryaupd', function()
             update():download()
         end)
-		sampAddChatMessage(script_name..'{ffffff} Вышло обновление скрипта ({dc4747}'..thisScript().version..'{ffffff} -> {42B166}'..lastver..'{ffffff}), введите {dc4747}/riveryaupd{ffffff} для обновления!', 0x73b461)
+		sampAddChatMessage(script_name..'{ffffff} Г‚Г»ГёГ«Г® Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ Г±ГЄГ°ГЁГЇГІГ  ({dc4747}'..thisScript().version..'{ffffff} -> {42B166}'..lastver..'{ffffff}), ГўГўГҐГ¤ГЁГІГҐ {dc4747}/riveryaupd{ffffff} Г¤Г«Гї Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГї!', 0x73b461)
 		addOneOffSound(0, 0, 0, 1058)
 	end
 end
@@ -639,12 +639,12 @@ function main()
     repeat wait(100) until isSampAvailable()
 	
 	_, myid = sampGetPlayerIdByCharHandle(playerPed)
-    mynick = sampGetPlayerNickname(myid) -- наш ник крч
+    mynick = sampGetPlayerNickname(myid) -- Г­Г Гё Г­ГЁГЄ ГЄГ°Г·
 	
-	local duration = 0.3 -- Описание персонажа by Cosmo (https://www.blast.hk/threads/84975/)
-	local max_alpha = 255 -- Описание персонажа by Cosmo (https://www.blast.hk/threads/84975/)
-	local start = os.clock() -- Описание персонажа by Cosmo (https://www.blast.hk/threads/84975/)
-	local finish = nil -- Описание персонажа by Cosmo (https://www.blast.hk/threads/84975/)
+	local duration = 0.3 -- ГЋГЇГЁГ±Г Г­ГЁГҐ ГЇГҐГ°Г±Г®Г­Г Г¦Г  by Cosmo (https://www.blast.hk/threads/84975/)
+	local max_alpha = 255 -- ГЋГЇГЁГ±Г Г­ГЁГҐ ГЇГҐГ°Г±Г®Г­Г Г¦Г  by Cosmo (https://www.blast.hk/threads/84975/)
+	local start = os.clock() -- ГЋГЇГЁГ±Г Г­ГЁГҐ ГЇГҐГ°Г±Г®Г­Г Г¦Г  by Cosmo (https://www.blast.hk/threads/84975/)
+	local finish = nil -- ГЋГЇГЁГ±Г Г­ГЁГҐ ГЇГҐГ°Г±Г®Г­Г Г¦Г  by Cosmo (https://www.blast.hk/threads/84975/)
 	
 	-- Unlock CPlaceName::Process (CUserDisplay::Process)
     --[[memory.hex2bin('E876FEFFFF', 0x5720A5, 5)
@@ -653,7 +653,7 @@ function main()
 	
 	gotofunc("all")--load all func
 	
-	-- анимация бездействия by vegas~ (https://www.blast.hk/threads/151523/)
+	-- Г Г­ГЁГ¬Г Г¶ГЁГї ГЎГҐГ§Г¤ГҐГ©Г±ГІГўГЁГї by vegas~ (https://www.blast.hk/threads/151523/)
 	for i, k in pairs(player.anims) do
         if k.file ~= "PED" then
             requestAnimation(k.file)
@@ -701,7 +701,7 @@ function main()
     while true do
         wait(0)
 		if ini.fixes.animidle then
-			player.thePlayer() -- анимация бездействия by vegas~ (https://www.blast.hk/threads/151523/)
+			player.thePlayer() -- Г Г­ГЁГ¬Г Г¶ГЁГї ГЎГҐГ§Г¤ГҐГ©Г±ГІГўГЁГї by vegas~ (https://www.blast.hk/threads/151523/)
 		end
 		
 		local car = storeCarCharIsInNoSave(playerPed)
@@ -723,10 +723,10 @@ function main()
 		end
 		
 		local chatstring = sampGetChatString(99)
-        if chatstring == "Server closed the connection." or chatstring == "You are banned from this server." or chatstring == "Сервер закрыл соединение." or chatstring == "Вы забанены на этом сервере." then
+        if chatstring == "Server closed the connection." or chatstring == "You are banned from this server." or chatstring == "Г‘ГҐГ°ГўГҐГ° Г§Г ГЄГ°Г»Г« Г±Г®ГҐГ¤ГЁГ­ГҐГ­ГЁГҐ." or chatstring == "Г‚Г» Г§Г ГЎГ Г­ГҐГ­Г» Г­Г  ГЅГІГ®Г¬ Г±ГҐГ°ГўГҐГ°ГҐ." then
 	    sampDisconnectWithReason(false)
-            sampAddChatMessage("Переподключение...", 0xa9c4e4)
-            wait(15000) -- задержка
+            sampAddChatMessage("ГЏГҐГ°ГҐГЇГ®Г¤ГЄГ«ГѕГ·ГҐГ­ГЁГҐ...", 0xa9c4e4)
+            wait(15000) -- Г§Г Г¤ГҐГ°Г¦ГЄГ 
             sampSetGamestate(1)
         end
         ----------------
@@ -767,7 +767,7 @@ function main()
                 end
             end
         end
-        ---------------- Описание персонажа by Cosmo (https://www.blast.hk/threads/84975/)
+        ---------------- ГЋГЇГЁГ±Г Г­ГЁГҐ ГЇГҐГ°Г±Г®Г­Г Г¦Г  by Cosmo (https://www.blast.hk/threads/84975/)
 		local result, ped = getCharPlayerIsTargeting(PLAYER_HANDLE)
 		if result then
 			finish = nil
@@ -795,7 +795,7 @@ function main()
 				active, finish = nil, nil
 			end
 		end
-        ---------------- Описание персонажа by Cosmo (https://www.blast.hk/threads/84975/)
+        ---------------- ГЋГЇГЁГ±Г Г­ГЁГҐ ГЇГҐГ°Г±Г®Г­Г Г¦Г  by Cosmo (https://www.blast.hk/threads/84975/)
 		if isKeyJustPressed(113) and not sampIsCursorActive() then
             riverya.switch()
         end
@@ -808,11 +808,11 @@ function main()
 		end
 		
 		if ini.main.givemedist == true then
-            memory.write(0x53EA95, 0xB7C7F0, 4, true)-- вкл
-			memory.write(0x7FE621, 0xC99F68, 4, true)-- вкл
+            memory.write(0x53EA95, 0xB7C7F0, 4, true)-- ГўГЄГ«
+			memory.write(0x7FE621, 0xC99F68, 4, true)-- ГўГЄГ«
 		else
-			memory.write(0x53EA95, 0xB7C4F0, 4, true)-- выкл
-			memory.write(0x7FE621, 0xC992F0, 4, true)-- выкл
+			memory.write(0x53EA95, 0xB7C4F0, 4, true)-- ГўГ»ГЄГ«
+			memory.write(0x7FE621, 0xC992F0, 4, true)-- ГўГ»ГЄГ«
 		end
 		
 		if memory.setfloat(12044272, true) ~= ini.main.drawdist then
@@ -869,25 +869,25 @@ function onSendRpc(id, bs, priority, reliability, orderingChannel, shiftTs)
 			ini.main.shownicks = not ini.main.shownicks
 			gotofunc("ShowNicks")
 			save()
-            sampAddChatMessage(ini.main.shownicks and script_name..' {FFFFFF}Ники игроков {73b461}включены' or script_name..' {FFFFFF}Ники игроков {dc4747}выключены', 0x73b461)
+            sampAddChatMessage(ini.main.shownicks and script_name..' {FFFFFF}ГЌГЁГЄГЁ ГЁГЈГ°Г®ГЄГ®Гў {73b461}ГўГЄГ«ГѕГ·ГҐГ­Г»' or script_name..' {FFFFFF}ГЌГЁГЄГЁ ГЁГЈГ°Г®ГЄГ®Гў {dc4747}ГўГ»ГЄГ«ГѕГ·ГҐГ­Г»', 0x73b461)
 		end
 		if cmd:find("^"..ini.commands.showhp.."$") then
 			ini.main.showhp = not ini.main.showhp
 			gotofunc("ShowHP")
 			save()
-			sampAddChatMessage(ini.main.showhp and script_name..' {FFFFFF}ХП игроков {73b461}включен' or script_name..' {FFFFFF}ХП игроков {dc4747}выключен', 0x73b461)
+			sampAddChatMessage(ini.main.showhp and script_name..' {FFFFFF}Г•ГЏ ГЁГЈГ°Г®ГЄГ®Гў {73b461}ГўГЄГ«ГѕГ·ГҐГ­' or script_name..' {FFFFFF}Г•ГЏ ГЁГЈГ°Г®ГЄГ®Гў {dc4747}ГўГ»ГЄГ«ГѕГ·ГҐГ­', 0x73b461)
 		end
 		if cmd:find("^"..ini.commands.gameradio.."$") then
 			ini.main.noradio = not ini.main.noradio
 			gotofunc("NoRadio")
 			save()
-			sampAddChatMessage(ini.main.noradio and script_name..' {FFFFFF}Радио {73b461}включено' or script_name..' {FFFFFF}Радио {dc4747}выключено', 0x73b461)
+			sampAddChatMessage(ini.main.noradio and script_name..' {FFFFFF}ГђГ Г¤ГЁГ® {73b461}ГўГЄГ«ГѕГ·ГҐГ­Г®' or script_name..' {FFFFFF}ГђГ Г¤ГЁГ® {dc4747}ГўГ»ГЄГ«ГѕГ·ГҐГ­Г®', 0x73b461)
 		end
 		if cmd:find("^"..ini.commands.delgun.."$") then
 			ini.main.delgun = not ini.main.delgun
 			gotofunc("DelGun")
 			save()
-			sampAddChatMessage(ini.main.delgun and '{73b461}'..script_name..' {FFFFFF}Удаление всего оружия в руках на клавишу DELETE {73b461}включено!' or '{73b461}'..script_name..' {FFFFFF}Удаление всего оружия в руках на клавишу DELETE {dc4747}отключено!', -1)
+			sampAddChatMessage(ini.main.delgun and '{73b461}'..script_name..' {FFFFFF}Г“Г¤Г Г«ГҐГ­ГЁГҐ ГўГ±ГҐГЈГ® Г®Г°ГіГ¦ГЁГї Гў Г°ГіГЄГ Гµ Г­Г  ГЄГ«Г ГўГЁГёГі DELETE {73b461}ГўГЄГ«ГѕГ·ГҐГ­Г®!' or '{73b461}'..script_name..' {FFFFFF}Г“Г¤Г Г«ГҐГ­ГЁГҐ ГўГ±ГҐГЈГ® Г®Г°ГіГ¦ГЁГї Гў Г°ГіГЄГ Гµ Г­Г  ГЄГ«Г ГўГЁГёГі DELETE {dc4747}Г®ГІГЄГ«ГѕГ·ГҐГ­Г®!', -1)
 		end
 		if cmd:find("^"..ini.commands.clearchat.."$") then
 			gotofunc("ClearChat")
@@ -897,7 +897,7 @@ function onSendRpc(id, bs, priority, reliability, orderingChannel, shiftTs)
 			ini.main.showchat = not ini.main.showchat
 			gotofunc("ShowChat")
 			save()
-			sampAddChatMessage(ini.main.showchat and '{73b461}'..script_name..' {FFFFFF}Чат {dc4747}отключен!' or '{73b461}'..script_name..' {FFFFFF}Чат {73b461}включен!', -1)
+			sampAddChatMessage(ini.main.showchat and '{73b461}'..script_name..' {FFFFFF}Г—Г ГІ {dc4747}Г®ГІГЄГ«ГѕГ·ГҐГ­!' or '{73b461}'..script_name..' {FFFFFF}Г—Г ГІ {73b461}ГўГЄГ«ГѕГ·ГҐГ­!', -1)
 		end
 		
 		if cmd:find("^"..ini.commands.dialogstyle.."$") then
@@ -905,13 +905,13 @@ function onSendRpc(id, bs, priority, reliability, orderingChannel, shiftTs)
 			gotofunc("DialogStyle")
 			save()
 			checkboxes.dialogstyle[0] = ini.themesetting.dialogstyle
-			sampAddChatMessage(ini.themesetting.dialogstyle and '{73b461}'..script_name..' {FFFFFF}Новый цвет диалогов {73b461}включен!' or '{73b461}'..script_name..' {FFFFFF}Новый цвет диалогов {dc4747}отключен!', -1)
+			sampAddChatMessage(ini.themesetting.dialogstyle and '{73b461}'..script_name..' {FFFFFF}ГЌГ®ГўГ»Г© Г¶ГўГҐГІ Г¤ГЁГ Г«Г®ГЈГ®Гў {73b461}ГўГЄГ«ГѕГ·ГҐГ­!' or '{73b461}'..script_name..' {FFFFFF}ГЌГ®ГўГ»Г© Г¶ГўГҐГІ Г¤ГЁГ Г«Г®ГЈГ®Гў {dc4747}Г®ГІГЄГ«ГѕГ·ГҐГ­!', -1)
 		end
 		if cmd:find("^"..ini.commands.showhud.."$") then
 			ini.main.showhud = not ini.main.showhud
 			gotofunc("ShowHud")
 			save()
-			sampAddChatMessage(ini.main.showhud and '{73b461}'..script_name..' {FFFFFF}HUD {73b461}включен!' or '{73b461}'..script_name..' {FFFFFF}HUD {dc4747}отключен!', -1)
+			sampAddChatMessage(ini.main.showhud and '{73b461}'..script_name..' {FFFFFF}HUD {73b461}ГўГЄГ«ГѕГ·ГҐГ­!' or '{73b461}'..script_name..' {FFFFFF}HUD {dc4747}Г®ГІГЄГ«ГѕГ·ГҐГ­!', -1)
 		end
 	end
 end
@@ -949,7 +949,7 @@ function samp.onSendCommand(msg)
         if cmd == "sms" or cmd == "t" or cmd == "todo" or cmd == "seeme" then return end
         -- cmd = cmd:lower()
 
-        --Рация, радио, ООС чат, шепот, крик (с поддержкой переноса ООС-скобок)
+        --ГђГ Г¶ГЁГї, Г°Г Г¤ГЁГ®, ГЋГЋГ‘ Г·Г ГІ, ГёГҐГЇГ®ГІ, ГЄГ°ГЁГЄ (Г± ГЇГ®Г¤Г¤ГҐГ°Г¦ГЄГ®Г© ГЇГҐГ°ГҐГ­Г®Г±Г  ГЋГЋГ‘-Г±ГЄГ®ГЎГ®ГЄ)
         for i, v in ipairs(chatcommands) do if cmd == v then
             local length = msg:len()
             if msg:sub(1, 2) == "((" then
@@ -960,7 +960,7 @@ function samp.onSendCommand(msg)
             end
         end end
 
-        --РП команды
+        --ГђГЏ ГЄГ®Г¬Г Г­Г¤Г»
         if cmd == "me" or cmd == "do" then
             local length = msg:len()
             if length > 75 then divide(msg, "/" .. cmd .. " ", "", "ext"); return false end
@@ -969,7 +969,7 @@ function samp.onSendCommand(msg)
 ----------------------------------------------------------------------
 end
 
-function divide(msg, beginning, ending, doing) -- разделение сообщения msg на два by Gorskin (https://www.blast.hk/members/157398/)
+function divide(msg, beginning, ending, doing) -- Г°Г Г§Г¤ГҐГ«ГҐГ­ГЁГҐ Г±Г®Г®ГЎГ№ГҐГ­ГЁГї msg Г­Г  Г¤ГўГ  by Gorskin (https://www.blast.hk/members/157398/)
 	limit = 72
 	
 	local one, two = string.match(msg:sub(1, limit), "(.*) (.*)")
@@ -984,14 +984,14 @@ function divide(msg, beginning, ending, doing) -- разделение сообщения msg на дв
 	bi = true; lua_thread.create(function() wait(1400) sampSendChat(beginning .. two .. ending) end) 
 end
 
-function ev.onCreate3DText(id, col, pos, dist, wall, PID, VID, text) -- описание персонажа
+function ev.onCreate3DText(id, col, pos, dist, wall, PID, VID, text) -- Г®ГЇГЁГ±Г Г­ГЁГҐ ГЇГҐГ°Г±Г®Г­Г Г¦Г 
 	if PID ~= 65535 and col == -858993409 and pos.z == -1 then
 		pool[PID] = {id = id, col = col, pos = pos, dist = dist, wall = wall, PID = PID, VID = VID, text = text }
 		return false
 	end
 end
 
-function ev.onRemove3DTextLabel(id) -- описание персонажа by Cosmo
+function ev.onRemove3DTextLabel(id) -- Г®ГЇГЁГ±Г Г­ГЁГҐ ГЇГҐГ°Г±Г®Г­Г Г¦Г  by Cosmo
 	for i, info in ipairs(pool) do
 		if info.id == id then
 			table.remove(pool, i)
@@ -1006,9 +1006,9 @@ function cmd_fdist(param)
         if ini.main.givemedist == true then
             ini.main.drawdist = param
             save()
-            sampAddChatMessage(script_name.." {FFFFFF} Вы установили основную прорисовку на: {dc4747}"..ini.main.drawdist.." {FFFFFF}метров", 0x73b461)
+            sampAddChatMessage(script_name.." {FFFFFF} Г‚Г» ГіГ±ГІГ Г­Г®ГўГЁГ«ГЁ Г®Г±Г­Г®ГўГ­ГіГѕ ГЇГ°Г®Г°ГЁГ±Г®ГўГЄГі Г­Г : {dc4747}"..ini.main.drawdist.." {FFFFFF}Г¬ГҐГІГ°Г®Гў", 0x73b461)
         else
-            sampAddChatMessage(script_name.." {FFFFFF} У вас стоит запрет на изменение прорисовки! Используйте: {dc4747}/blockdist", 0x73b461)
+            sampAddChatMessage(script_name.." {FFFFFF} Г“ ГўГ Г± Г±ГІГ®ГЁГІ Г§Г ГЇГ°ГҐГІ Г­Г  ГЁГ§Г¬ГҐГ­ГҐГ­ГЁГҐ ГЇГ°Г®Г°ГЁГ±Г®ГўГЄГЁ! Г€Г±ГЇГ®Г«ГјГ§ГіГ©ГІГҐ: {dc4747}/blockdist", 0x73b461)
         end
 	end
 end
@@ -1044,21 +1044,21 @@ end
 
 function hppos(param)
 	if tonumber(param) and tonumber(param) <= 3 and tonumber(param) >= 1 then
-        sampAddChatMessage(script_name.." {FFFFFF} Установлена позиция: {DC4747}"..param.."", 0x73b461)
+        sampAddChatMessage(script_name.." {FFFFFF} Г“Г±ГІГ Г­Г®ГўГ«ГҐГ­Г  ГЇГ®Г§ГЁГ¶ГЁГї: {DC4747}"..param.."", 0x73b461)
 		ini.hphud.pos = tonumber(param)
         save()
 	else
-        sampAddChatMessage(script_name.." {FFFFFF} Используйте {DC4747}/hppos {ffffff}- [1 - 3]", 0x73b461)
+        sampAddChatMessage(script_name.." {FFFFFF} Г€Г±ГЇГ®Г«ГјГ§ГіГ©ГІГҐ {DC4747}/hppos {ffffff}- [1 - 3]", 0x73b461)
 	end
 end
 
 function hpt()
 	if ini.hphud.style == 1 then
-        sampAddChatMessage(script_name.." {FFFFFF} Установлен стиль худа: {DC4747}без надписи \"hp\"", 0x73b461)
+        sampAddChatMessage(script_name.." {FFFFFF} Г“Г±ГІГ Г­Г®ГўГ«ГҐГ­ Г±ГІГЁГ«Гј ГµГіГ¤Г : {DC4747}ГЎГҐГ§ Г­Г Г¤ГЇГЁГ±ГЁ \"hp\"", 0x73b461)
 		ini.hphud.style = 0
         save()
 	else
-		sampAddChatMessage(script_name.." {FFFFFF} Установлен стиль худа: {DC4747}с надписью \"hp\"", 0x73b461)
+		sampAddChatMessage(script_name.." {FFFFFF} Г“Г±ГІГ Г­Г®ГўГ«ГҐГ­ Г±ГІГЁГ«Гј ГµГіГ¤Г : {DC4747}Г± Г­Г Г¤ГЇГЁГ±ГјГѕ \"hp\"", 0x73b461)
 		ini.hphud.style = 1
         save()
 	end
@@ -1067,11 +1067,11 @@ end
 function hpstyle(param)
 	if tonumber(param) and tonumber(param) <= 3 and tonumber(param) >= 0 then
 		ini.hphud.text = param
-        sampAddChatMessage(script_name.." {FFFFFF}Установлен шрифт: {DC4747}"..param.."", 0x73b461)
+        sampAddChatMessage(script_name.." {FFFFFF}Г“Г±ГІГ Г­Г®ГўГ«ГҐГ­ ГёГ°ГЁГґГІ: {DC4747}"..param.."", 0x73b461)
 		ini.hphud.text = param
         save()
 	else
-        sampAddChatMessage(script_name.." {FFFFFF}Используйте {DC4747}/hpstyle {ffffff}- [0, 1, 2, 3]", 0x73b461)
+        sampAddChatMessage(script_name.." {FFFFFF}Г€Г±ГЇГ®Г«ГјГ§ГіГ©ГІГҐ {DC4747}/hpstyle {ffffff}- [0, 1, 2, 3]", 0x73b461)
 	end
 end
 
@@ -1084,7 +1084,7 @@ function onScriptTerminate(script, quitGame)
 	end
 end
 
---=========================================| Шрифты и прочее | =====================================
+--=========================================| ГГ°ГЁГґГІГ» ГЁ ГЇГ°Г®Г·ГҐГҐ | =====================================
 local fonts = {}
 imgui.OnInitialize(function()
 	imgui.GetIO().IniFilename = nil
@@ -1092,7 +1092,7 @@ imgui.OnInitialize(function()
     config.MergeMode = true
     config.PixelSnapH = true
     local iconRanges = new.ImWchar[3](fa.min_range, fa.max_range, 0)
-    imgui.GetIO().Fonts:AddFontFromMemoryCompressedBase85TTF(fa.get_font_data_base85('solid'), 14, config, iconRanges) -- solid - тип иконок, так же есть thin, regular, light и duotone
+    imgui.GetIO().Fonts:AddFontFromMemoryCompressedBase85TTF(fa.get_font_data_base85('solid'), 14, config, iconRanges) -- solid - ГІГЁГЇ ГЁГЄГ®Г­Г®ГЄ, ГІГ ГЄ Г¦ГҐ ГҐГ±ГІГј thin, regular, light ГЁ duotone
 	SwitchTheStyle(ini.themesetting.theme)
 	
 	local glyph_ranges = imgui.GetIO().Fonts:GetGlyphRangesCyrillic()
@@ -1106,7 +1106,7 @@ imgui.OnInitialize(function()
     fonts[15] = imgui.GetIO().Fonts:AddFontFromFileTTF(path, 16, nil, glyph_ranges)
     iconFont = imgui.GetIO().Fonts:AddFontFromFileTTF('moonloader/resource/gamefixer/fonts/fa-solid-900.ttf', 15.0, config, iconRanges)
 end)
---=========================================| Шрифты и прочее | =====================================
+--=========================================| ГГ°ГЁГґГІГ» ГЁ ГЇГ°Г®Г·ГҐГҐ | =====================================
 
 local Frame = imgui.OnFrame(
     function() return riverya.alpha > 0.00 end,
@@ -1122,7 +1122,7 @@ local Frame = imgui.OnFrame(
         imgui.SetNextWindowSize(imgui.ImVec2(675, 358), imgui.Cond.FirstUseEver)
 		imgui.SetNextWindowPos(imgui.ImVec2((sw / 2), sh / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
 		imgui.Begin(u8"SAMPFixer by "..script_author.."", new.bool(true), imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoTitleBar + imgui.WindowFlags.NoResize)
-			--------------------[СампХуиксер]--------------------
+			--------------------[Г‘Г Г¬ГЇГ•ГіГЁГЄГ±ГҐГ°]--------------------
 			local logotext = u8"SAMPFixer"
 			local versiontext = "by riverya4life"
             imgui.PushFont(logofont)
@@ -1133,11 +1133,11 @@ local Frame = imgui.OnFrame(
 			imgui.Text(logotext)
 			imgui.PopFont()
 			imgui.PopStyleColor()
-			--------------------[Не тыкай на меня долбоеб]--------------------
+			--------------------[ГЌГҐ ГІГ»ГЄГ Г© Г­Г  Г¬ГҐГ­Гї Г¤Г®Г«ГЎГ®ГҐГЎ]--------------------
 			if imgui.IsItemClicked(0) then
-				sampAddChatMessage(script_name.." {FFFFFF}Перестань на меня тыкать заебал", 0x73b461)
+				sampAddChatMessage(script_name.." {FFFFFF}ГЏГҐГ°ГҐГ±ГІГ Г­Гј Г­Г  Г¬ГҐГ­Гї ГІГ»ГЄГ ГІГј Г§Г ГҐГЎГ Г«", 0x73b461)
 			end
-			--------------------[Не тыкай на меня долбоеб]--------------------
+			--------------------[ГЌГҐ ГІГ»ГЄГ Г© Г­Г  Г¬ГҐГ­Гї Г¤Г®Г«ГЎГ®ГҐГЎ]--------------------
 			
 			imgui.SetCursorPos(imgui.ImVec2(-3, 33))
 			imgui.CustomMenu(tabs, tab, imgui.ImVec2(144, 40))
@@ -1152,9 +1152,9 @@ local Frame = imgui.OnFrame(
 			imgui.BeginChild('##main', imgui.ImVec2(-1, 318), true)
 			if tab[0] == 1 then
 				if ini.main.blockweather then
-					imgui.Text(fa.CLOUD_SUN_RAIN..u8" Погода:")
+					imgui.Text(fa.CLOUD_SUN_RAIN..u8" ГЏГ®ГЈГ®Г¤Г :")
 					imgui.SameLine()
-					imgui.Hint(u8"Изменяет игровую погоду на свою.", 0.2)
+					imgui.Hint(u8"Г€Г§Г¬ГҐГ­ГїГҐГІ ГЁГЈГ°Г®ГўГіГѕ ГЇГ®ГЈГ®Г¤Гі Г­Г  Г±ГўГ®Гѕ.", 0.2)
 					if imgui.SliderInt(u8"##Weather", sliders.weather, 0, 45) then
 						ini.main.weather = sliders.weather[0] 
 						save()
@@ -1162,58 +1162,58 @@ local Frame = imgui.OnFrame(
 					end
 				end
 				if ini.main.blocktime then
-					imgui.Text(fa.MOON..u8" Время:")
+					imgui.Text(fa.MOON..u8" Г‚Г°ГҐГ¬Гї:")
 					imgui.SameLine()
-					imgui.Hint(u8"Изменяет игровое время на своё.", 0.2)
+					imgui.Hint(u8"Г€Г§Г¬ГҐГ­ГїГҐГІ ГЁГЈГ°Г®ГўГ®ГҐ ГўГ°ГҐГ¬Гї Г­Г  Г±ГўГ®Вё.", 0.2)
 					if imgui.SliderInt(u8"##Time", sliders.time, 0, 23) then
 						ini.main.time = sliders.time[0] 
 						save()
 						gotofunc("SetTime")
 					end
 				end
-				if imgui.Checkbox(u8" Блокировать изменение погоды сервером", checkboxes.blockweather) then
+				if imgui.Checkbox(u8" ГЃГ«Г®ГЄГЁГ°Г®ГўГ ГІГј ГЁГ§Г¬ГҐГ­ГҐГ­ГЁГҐ ГЇГ®ГЈГ®Г¤Г» Г±ГҐГ°ГўГҐГ°Г®Г¬", checkboxes.blockweather) then
 					ini.main.blockweather = checkboxes.blockweather[0] 
 					save()
 					gotofunc("BlockWeather")
 					gotofunc("SetWeather")
 				end
-				if imgui.Checkbox(u8" Блокировать изменение времени сервером", checkboxes.blocktime) then
+				if imgui.Checkbox(u8" ГЃГ«Г®ГЄГЁГ°Г®ГўГ ГІГј ГЁГ§Г¬ГҐГ­ГҐГ­ГЁГҐ ГўГ°ГҐГ¬ГҐГ­ГЁ Г±ГҐГ°ГўГҐГ°Г®Г¬", checkboxes.blocktime) then
 					ini.main.blocktime = checkboxes.blocktime[0] 
 					save()
 					gotofunc("BlockTime")
 					gotofunc("SetTime")
 				end
-				imgui.Text(fa.CIRCLE_DOLLAR_TO_SLOT..u8" Анимация прибавления / убавления денег:")
+				imgui.Text(fa.CIRCLE_DOLLAR_TO_SLOT..u8" ГЂГ­ГЁГ¬Г Г¶ГЁГї ГЇГ°ГЁГЎГ ГўГ«ГҐГ­ГЁГї / ГіГЎГ ГўГ«ГҐГ­ГЁГї Г¤ГҐГ­ГҐГЈ:")
                 if imgui.Combo("##2", ivar, tmtext, #tbmtext) then
 					ini.main.animmoney = ivar[0]+1
 					save()
 					gotofunc("AnimationMoney")
 				end
-				imgui.Text(fa.CIRCLE_DOLLAR_TO_SLOT..u8" Стиль шрифта денег:")
+				imgui.Text(fa.CIRCLE_DOLLAR_TO_SLOT..u8" Г‘ГІГЁГ«Гј ГёГ°ГЁГґГІГ  Г¤ГҐГ­ГҐГЈ:")
 				imgui.SameLine()
-				imgui.Hint(u8"Изменяет стиль шрифта денег если вам надоел оригинальный (стандартное значение 3).", 0.2)
+				imgui.Hint(u8"Г€Г§Г¬ГҐГ­ГїГҐГІ Г±ГІГЁГ«Гј ГёГ°ГЁГґГІГ  Г¤ГҐГ­ГҐГЈ ГҐГ±Г«ГЁ ГўГ Г¬ Г­Г Г¤Г®ГҐГ« Г®Г°ГЁГЈГЁГ­Г Г«ГјГ­Г»Г© (Г±ГІГ Г­Г¤Г Г°ГІГ­Г®ГҐ Г§Г­Г Г·ГҐГ­ГЁГҐ 3).", 0.2)
 				if imgui.SliderInt(u8"##MoneyFontStyle", sliders.moneyfontstyle, 0, 3) then
 					ini.main.moneyfontstyle = sliders.moneyfontstyle[0]
 					save()
                     gotofunc("MoneyFontStyle")
 				end
-				imgui.Text(fa.CLOUD_SUN_RAIN..u8" Прозрачность карты на радаре:")
+				imgui.Text(fa.CLOUD_SUN_RAIN..u8" ГЏГ°Г®Г§Г°Г Г·Г­Г®Г±ГІГј ГЄГ Г°ГІГ» Г­Г  Г°Г Г¤Г Г°ГҐ:")
 				imgui.SameLine()
-				imgui.Hint(u8"Изменяет прозрачность карты на радаре. Сама карта в меню ESC будет обычной (значение от 0 до 255).", 0.2)
+				imgui.Hint(u8"Г€Г§Г¬ГҐГ­ГїГҐГІ ГЇГ°Г®Г§Г°Г Г·Г­Г®Г±ГІГј ГЄГ Г°ГІГ» Г­Г  Г°Г Г¤Г Г°ГҐ. Г‘Г Г¬Г  ГЄГ Г°ГІГ  Гў Г¬ГҐГ­Гѕ ESC ГЎГіГ¤ГҐГІ Г®ГЎГ»Г·Г­Г®Г© (Г§Г­Г Г·ГҐГ­ГЁГҐ Г®ГІ 0 Г¤Г® 255).", 0.2)
 				if imgui.SliderInt(u8"##AlphaMap", sliders.alphamap, 0, 255) then
 					ini.main.alphamap = sliders.alphamap[0]
 					save()
                     gotofunc("AlphaMap")
 				end
 
-                if imgui.Button(u8(ini.main.vsync and 'Выключить' or 'Включить')..u8" вертикальную синхронизацию", imgui.ImVec2(334, 25)) then
+                if imgui.Button(u8(ini.main.vsync and 'Г‚Г»ГЄГ«ГѕГ·ГЁГІГј' or 'Г‚ГЄГ«ГѕГ·ГЁГІГј')..u8" ГўГҐГ°ГІГЁГЄГ Г«ГјГ­ГіГѕ Г±ГЁГ­ГµГ°Г®Г­ГЁГ§Г Г¶ГЁГѕ", imgui.ImVec2(334, 25)) then
                     ini.main.vsync = not ini.main.vsync
-                    sampAddChatMessage(ini.main.vsync and script_name..' {FFFFFF}Вертикальная синхронизация {73b461}включена' or script_name..' {FFFFFF}Вертикальная синхронизация {dc4747}выключена', 0x73b461)
+                    sampAddChatMessage(ini.main.vsync and script_name..' {FFFFFF}Г‚ГҐГ°ГІГЁГЄГ Г«ГјГ­Г Гї Г±ГЁГ­ГµГ°Г®Г­ГЁГ§Г Г¶ГЁГї {73b461}ГўГЄГ«ГѕГ·ГҐГ­Г ' or script_name..' {FFFFFF}Г‚ГҐГ°ГІГЁГЄГ Г«ГјГ­Г Гї Г±ГЁГ­ГµГ°Г®Г­ГЁГ§Г Г¶ГЁГї {dc4747}ГўГ»ГЄГ«ГѕГ·ГҐГ­Г ', 0x73b461)
                     save()
                     gotofunc("Vsync")
                 end
 				imgui.SetCursorPos(imgui.ImVec2(353, 15))
-				imgui.BeginTitleChild(u8"Блокировка клавиш", imgui.ImVec2(150, 130), 4, 13)
+				imgui.BeginTitleChild(u8"ГЃГ«Г®ГЄГЁГ°Г®ГўГЄГ  ГЄГ«Г ГўГЁГё", imgui.ImVec2(150, 130), 4, 13)
 					if imgui.Checkbox(u8" F1", checkboxes.nop_samp_keys_F1) then
 						ini.nop_samp_keys.key_F1 = checkboxes.nop_samp_keys_F1[0]
 						save()
@@ -1241,79 +1241,79 @@ local Frame = imgui.OnFrame(
 				imgui.EndChild()
 
 			elseif tab[0] == 2 then
-				if imgui.Checkbox(u8" Отключить пост-обработку", checkboxes.postfx) then
+				if imgui.Checkbox(u8" ГЋГІГЄГ«ГѕГ·ГЁГІГј ГЇГ®Г±ГІ-Г®ГЎГ°Г ГЎГ®ГІГЄГі", checkboxes.postfx) then
 					ini.main.postfx = checkboxes.postfx[0]
 					gotofunc("NoPostfx")
 					save()
 				end
 				imgui.SameLine()
-				imgui.Hint(u8"Отключает пост-обработку, если у вас слабый пк.", 0.2)
+				imgui.Hint(u8"ГЋГІГЄГ«ГѕГ·Г ГҐГІ ГЇГ®Г±ГІ-Г®ГЎГ°Г ГЎГ®ГІГЄГі, ГҐГ±Г«ГЁ Гі ГўГ Г± Г±Г«Г ГЎГ»Г© ГЇГЄ.", 0.2)
 				
-				if imgui.Checkbox(u8" Отключить эффекты", checkboxes.noeffects) then
+				if imgui.Checkbox(u8" ГЋГІГЄГ«ГѕГ·ГЁГІГј ГЅГґГґГҐГЄГІГ»", checkboxes.noeffects) then
 					ini.main.noeffects = checkboxes.noeffects[0]
 					save()
 				end
 				imgui.SameLine()
-				imgui.Hint(u8"Отключает эффекты в игре, если у вас слабый пк.", 0.2)
-                if imgui.CollapsingHeader(fa.EYE..u8' Дальность прорисовки') then
-                    if imgui.Checkbox(u8" Включить возможность менять прорисовку", checkboxes.givemedist) then
+				imgui.Hint(u8"ГЋГІГЄГ«ГѕГ·Г ГҐГІ ГЅГґГґГҐГЄГІГ» Гў ГЁГЈГ°ГҐ, ГҐГ±Г«ГЁ Гі ГўГ Г± Г±Г«Г ГЎГ»Г© ГЇГЄ.", 0.2)
+                if imgui.CollapsingHeader(fa.EYE..u8' Г„Г Г«ГјГ­Г®Г±ГІГј ГЇГ°Г®Г°ГЁГ±Г®ГўГЄГЁ') then
+                    if imgui.Checkbox(u8" Г‚ГЄГ«ГѕГ·ГЁГІГј ГўГ®Г§Г¬Г®Г¦Г­Г®Г±ГІГј Г¬ГҐГ­ГїГІГј ГЇГ°Г®Г°ГЁГ±Г®ГўГЄГі", checkboxes.givemedist) then
                         ini.main.givemedist = checkboxes.givemedist[0] 
                         save()
                     end
                     if ini.main.givemedist then
-                        imgui.Text(fa.EYE..u8" Основная дальность прорисовки:")
+                        imgui.Text(fa.EYE..u8" ГЋГ±Г­Г®ГўГ­Г Гї Г¤Г Г«ГјГ­Г®Г±ГІГј ГЇГ°Г®Г°ГЁГ±Г®ГўГЄГЁ:")
                         if imgui.SliderInt(u8"##Drawdist", sliders.drawdist, 35, 3600) then
                             ini.main.drawdist = sliders.drawdist[0]
                             save()
                         end
                         imgui.SameLine()
-						imgui.Hint(u8"Изменяет основную дальность прорисовки.", 0.2)
-                        imgui.Text(fa.PLANE_UP..u8" Дальность прорисовки в воздушном транспорте:")
+						imgui.Hint(u8"Г€Г§Г¬ГҐГ­ГїГҐГІ Г®Г±Г­Г®ГўГ­ГіГѕ Г¤Г Г«ГјГ­Г®Г±ГІГј ГЇГ°Г®Г°ГЁГ±Г®ГўГЄГЁ.", 0.2)
+                        imgui.Text(fa.PLANE_UP..u8" Г„Г Г«ГјГ­Г®Г±ГІГј ГЇГ°Г®Г°ГЁГ±Г®ГўГЄГЁ Гў ГўГ®Г§Г¤ГіГёГ­Г®Г¬ ГІГ°Г Г­Г±ГЇГ®Г°ГІГҐ:")
                         if imgui.SliderInt(u8"##drawdistair", sliders.drawdistair, 35, 3600) then
                             ini.main.drawdistair = sliders.drawdistair[0]
                             save()
                         end
                         imgui.SameLine()
-						imgui.Hint(u8"Изменяет дальность прорисовки в воздушном транспорте.", 0.2)
-                        imgui.Text(fa.PARACHUTE_BOX..u8" Дальность прорисовки при использовании парашута:")
+						imgui.Hint(u8"Г€Г§Г¬ГҐГ­ГїГҐГІ Г¤Г Г«ГјГ­Г®Г±ГІГј ГЇГ°Г®Г°ГЁГ±Г®ГўГЄГЁ Гў ГўГ®Г§Г¤ГіГёГ­Г®Г¬ ГІГ°Г Г­Г±ГЇГ®Г°ГІГҐ.", 0.2)
+                        imgui.Text(fa.PARACHUTE_BOX..u8" Г„Г Г«ГјГ­Г®Г±ГІГј ГЇГ°Г®Г°ГЁГ±Г®ГўГЄГЁ ГЇГ°ГЁ ГЁГ±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГЁ ГЇГ Г°Г ГёГіГІГ :")
                         if imgui.SliderInt(u8"##drawdistpara", sliders.drawdistpara, 35, 3600) then
                             ini.main.drawdistpara = sliders.drawdistpara[0]
                             save()
                         end
                         imgui.SameLine()
-						imgui.Hint(u8"Изменяет дальность прорисовки при использовании парашута.", 0.2)
-                        imgui.Text(fa.SMOG..u8" Дальность прорисовки тумана:")
+						imgui.Hint(u8"Г€Г§Г¬ГҐГ­ГїГҐГІ Г¤Г Г«ГјГ­Г®Г±ГІГј ГЇГ°Г®Г°ГЁГ±Г®ГўГЄГЁ ГЇГ°ГЁ ГЁГ±ГЇГ®Г«ГјГ§Г®ГўГ Г­ГЁГЁ ГЇГ Г°Г ГёГіГІГ .", 0.2)
+                        imgui.Text(fa.SMOG..u8" Г„Г Г«ГјГ­Г®Г±ГІГј ГЇГ°Г®Г°ГЁГ±Г®ГўГЄГЁ ГІГіГ¬Г Г­Г :")
                         if imgui.SliderInt(u8"##fog", sliders.fog, 0, 500) then
                             ini.main.fog = sliders.fog[0]
                             save()
                         end
                         imgui.SameLine()
-						imgui.Hint(u8"Изменяет дальность прорисовки тумана.", 0.2)
-                        imgui.Text(fa.MOUNTAIN..u8" Дальность прорисовки лодов:")
+						imgui.Hint(u8"Г€Г§Г¬ГҐГ­ГїГҐГІ Г¤Г Г«ГјГ­Г®Г±ГІГј ГЇГ°Г®Г°ГЁГ±Г®ГўГЄГЁ ГІГіГ¬Г Г­Г .", 0.2)
+                        imgui.Text(fa.MOUNTAIN..u8" Г„Г Г«ГјГ­Г®Г±ГІГј ГЇГ°Г®Г°ГЁГ±Г®ГўГЄГЁ Г«Г®Г¤Г®Гў:")
                         if imgui.SliderInt(u8"##lod", sliders.lod, 0, 300) then
                             ini.main.lod = sliders.lod[0]
                             save()
                         end
                         imgui.SameLine()
-						imgui.Hint(u8"Изменяет дальность прорисовки лодов.", 0.2)
+						imgui.Hint(u8"Г€Г§Г¬ГҐГ­ГїГҐГІ Г¤Г Г«ГјГ­Г®Г±ГІГј ГЇГ°Г®Г°ГЁГ±Г®ГўГЄГЁ Г«Г®Г¤Г®Гў.", 0.2)
                         end
                     end
-                    if imgui.CollapsingHeader(fa.EYE..u8' Очистка памяти', imgui.TreeNodeFlags.DefaultOpen) then
-                        if imgui.Checkbox(u8" Включить авто-очистку памяти", checkboxes.autoclean) then
+                    if imgui.CollapsingHeader(fa.EYE..u8' ГЋГ·ГЁГ±ГІГЄГ  ГЇГ Г¬ГїГІГЁ', imgui.TreeNodeFlags.DefaultOpen) then
+                        if imgui.Checkbox(u8" Г‚ГЄГ«ГѕГ·ГЁГІГј Г ГўГІГ®-Г®Г·ГЁГ±ГІГЄГі ГЇГ Г¬ГїГІГЁ", checkboxes.autoclean) then
                             ini.cleaner.autoclean = checkboxes.autoclean[0]
                             save()
                         end
-                        if imgui.Checkbox(u8" Показывать сообщение об очистке памяти", checkboxes.cleaninfo) then
+                        if imgui.Checkbox(u8" ГЏГ®ГЄГ Г§Г»ГўГ ГІГј Г±Г®Г®ГЎГ№ГҐГ­ГЁГҐ Г®ГЎ Г®Г·ГЁГ±ГІГЄГҐ ГЇГ Г¬ГїГІГЁ", checkboxes.cleaninfo) then
                             ini.cleaner.cleaninfo = checkboxes.cleaninfo[0]
                             save()
                         end
                         if ini.cleaner.autoclean then
-                            if imgui.SliderInt(u8"##memlimit", sliders.limitmem, 80, 3000, u8"Лимит для авто-очистки: %d МБ") then
+                            if imgui.SliderInt(u8"##memlimit", sliders.limitmem, 80, 3000, u8"Г‹ГЁГ¬ГЁГІ Г¤Г«Гї Г ГўГІГ®-Г®Г·ГЁГ±ГІГЄГЁ: %d ГЊГЃ") then
                                 ini.cleaner.limit = sliders.limitmem[0]
                                 save()
                             end
                         end
-                        if imgui.Button(u8"Очистить память", imgui.ImVec2(334, 25)) then
+                        if imgui.Button(u8"ГЋГ·ГЁГ±ГІГЁГІГј ГЇГ Г¬ГїГІГј", imgui.ImVec2(334, 25)) then
                             gotofunc("CleanMemory")
                         end
                     end
@@ -1330,17 +1330,17 @@ local Frame = imgui.OnFrame(
 				end
 			elseif tab[0] == 4 then
 			
-				if imgui.Button(fa.ERASER..u8" Очистить чат", imgui.ImVec2(190, 25)) then
+				if imgui.Button(fa.ERASER..u8" ГЋГ·ГЁГ±ГІГЁГІГј Г·Г ГІ", imgui.ImVec2(190, 25)) then
                     gotofunc("ClearChat")
                 end
                 if imgui.IsItemHovered() then
-                    imgui.SetTooltip(u8"Чтобы быстро очистить чат\nвведите в чат команду: "..ini.commands.clearchat)
+                    imgui.SetTooltip(u8"Г—ГІГ®ГЎГ» ГЎГ»Г±ГІГ°Г® Г®Г·ГЁГ±ГІГЁГІГј Г·Г ГІ\nГўГўГҐГ¤ГЁГІГҐ Гў Г·Г ГІ ГЄГ®Г¬Г Г­Г¤Гі: "..ini.commands.clearchat)
                 end
 				
 				imgui.SameLine()
 				if imgui.Button(fa.KEYBOARD..u8" AntiAFK: "..(antiafk and 'ON' or 'OFF').."", imgui.ImVec2(190, 25)) then
                     antiafk = not antiafk
-                    sampAddChatMessage(antiafk and script_name..' {FFFFFF}Анти-АФК {73b461}включен' or script_name..' {FFFFFF}Анти-АФК {dc4747}выключен', 0x73b461)
+                    sampAddChatMessage(antiafk and script_name..' {FFFFFF}ГЂГ­ГІГЁ-ГЂГ”ГЉ {73b461}ГўГЄГ«ГѕГ·ГҐГ­' or script_name..' {FFFFFF}ГЂГ­ГІГЁ-ГЂГ”ГЉ {dc4747}ГўГ»ГЄГ«ГѕГ·ГҐГ­', 0x73b461)
                     if antiafk then
                         memory.setuint8(7634870, 1, false)
                         memory.setuint8(7635034, 1, false)
@@ -1354,7 +1354,7 @@ local Frame = imgui.OnFrame(
                     end
                 end
                 if imgui.IsItemHovered() then
-                    imgui.SetTooltip(fa.EXCLAMATION..u8" Функция включает Анти-АФК\nесли вам не нужно чтобы после\nсворачивания игры она не вставала в паузу\n(Опасно, ибо можно получить бан!)")
+                    imgui.SetTooltip(fa.EXCLAMATION..u8" Г”ГіГ­ГЄГ¶ГЁГї ГўГЄГ«ГѕГ·Г ГҐГІ ГЂГ­ГІГЁ-ГЂГ”ГЉ\nГҐГ±Г«ГЁ ГўГ Г¬ Г­ГҐ Г­ГіГ¦Г­Г® Г·ГІГ®ГЎГ» ГЇГ®Г±Г«ГҐ\nГ±ГўГ®Г°Г Г·ГЁГўГ Г­ГЁГї ГЁГЈГ°Г» Г®Г­Г  Г­ГҐ ГўГ±ГІГ ГўГ Г«Г  Гў ГЇГ ГіГ§Гі\n(ГЋГЇГ Г±Г­Г®, ГЁГЎГ® Г¬Г®Г¦Г­Г® ГЇГ®Г«ГіГ·ГЁГІГј ГЎГ Г­!)")
                 end
 
 				if imgui.Button(fa.CAMERA..u8" Green Screen: "..(bscreen and 'ON' or 'OFF').."", imgui.ImVec2(190, 25)) then
@@ -1376,7 +1376,7 @@ local Frame = imgui.OnFrame(
                     end
                 end
                 if imgui.IsItemHovered() then
-                    imgui.SetTooltip(u8"Функция включает зеленый экран\nУдобно когда вы делаете скриншот ситуации")
+                    imgui.SetTooltip(u8"Г”ГіГ­ГЄГ¶ГЁГї ГўГЄГ«ГѕГ·Г ГҐГІ Г§ГҐГ«ГҐГ­Г»Г© ГЅГЄГ°Г Г­\nГ“Г¤Г®ГЎГ­Г® ГЄГ®ГЈГ¤Г  ГўГ» Г¤ГҐГ«Г ГҐГІГҐ Г±ГЄГ°ГЁГ­ГёГ®ГІ Г±ГЁГІГіГ Г¶ГЁГЁ")
                 end
 				
 				imgui.SameLine()
@@ -1399,58 +1399,58 @@ local Frame = imgui.OnFrame(
                     end
                 end
                 if imgui.IsItemHovered() then
-                    imgui.SetTooltip(u8"Функция включает черный экран (кому не нравится зелёный)\nУдобно когда вы делаете скриншот ситуации")
+                    imgui.SetTooltip(u8"Г”ГіГ­ГЄГ¶ГЁГї ГўГЄГ«ГѕГ·Г ГҐГІ Г·ГҐГ°Г­Г»Г© ГЅГЄГ°Г Г­ (ГЄГ®Г¬Гі Г­ГҐ Г­Г°Г ГўГЁГІГ±Гї Г§ГҐГ«ВёГ­Г»Г©)\nГ“Г¤Г®ГЎГ­Г® ГЄГ®ГЈГ¤Г  ГўГ» Г¤ГҐГ«Г ГҐГІГҐ Г±ГЄГ°ГЁГ­ГёГ®ГІ Г±ГЁГІГіГ Г¶ГЁГЁ")
                 end
 
-				if imgui.Button(fa.FIRE..u8" Получить бутылку пива", imgui.ImVec2(190, 25)) then
+				if imgui.Button(fa.FIRE..u8" ГЏГ®Г«ГіГ·ГЁГІГј ГЎГіГІГ»Г«ГЄГі ГЇГЁГўГ ", imgui.ImVec2(190, 25)) then
                     runSampfuncsConsoleCommand('0afd:20')
                 end
                 imgui.SameLine()
-                if imgui.Button(fa.FIRE..u8" Получить бутылку пива 2", imgui.ImVec2(190, 25)) then
+                if imgui.Button(fa.FIRE..u8" ГЏГ®Г«ГіГ·ГЁГІГј ГЎГіГІГ»Г«ГЄГі ГЇГЁГўГ  2", imgui.ImVec2(190, 25)) then
                     runSampfuncsConsoleCommand('0afd:22')
                 end
 
-                if imgui.Button(fa.FIRE..u8" Получить Sprunk", imgui.ImVec2(190, 25)) then
+                if imgui.Button(fa.FIRE..u8" ГЏГ®Г«ГіГ·ГЁГІГј Sprunk", imgui.ImVec2(190, 25)) then
                     runSampfuncsConsoleCommand('0afd:23')
                 end
 
 				if imgui.IsItemHovered() then
-                    imgui.SetTooltip(u8"Сможешь выпить Sprunk когда захочешь и где хочешь!")
+                    imgui.SetTooltip(u8"Г‘Г¬Г®Г¦ГҐГёГј ГўГ»ГЇГЁГІГј Sprunk ГЄГ®ГЈГ¤Г  Г§Г ГµГ®Г·ГҐГёГј ГЁ ГЈГ¤ГҐ ГµГ®Г·ГҐГёГј!")
                 end
                 imgui.SameLine()
-                if imgui.Button(fa.FIRE..u8" Получить сигарету", imgui.ImVec2(190, 25)) then
+                if imgui.Button(fa.FIRE..u8" ГЏГ®Г«ГіГ·ГЁГІГј Г±ГЁГЈГ Г°ГҐГІГі", imgui.ImVec2(190, 25)) then
                     runSampfuncsConsoleCommand('0afd:21')
                 end
 				if imgui.IsItemHovered() then
-                    imgui.SetTooltip(u8"Сможешь закурить когда твоей душе угодно!")
+                    imgui.SetTooltip(u8"Г‘Г¬Г®Г¦ГҐГёГј Г§Г ГЄГіГ°ГЁГІГј ГЄГ®ГЈГ¤Г  ГІГўГ®ГҐГ© Г¤ГіГёГҐ ГіГЈГ®Г¤Г­Г®!")
                 end
 
-				if imgui.Button(fa.WATER..u8" Обоссать", imgui.ImVec2(190, 25)) then
+				if imgui.Button(fa.WATER..u8" ГЋГЎГ®Г±Г±Г ГІГј", imgui.ImVec2(190, 25)) then
                     runSampfuncsConsoleCommand('0afd:68')
                 end
 				if imgui.IsItemHovered() then
-                    imgui.SetTooltip(u8"Сможешь обоссать кого захочешь!")
+                    imgui.SetTooltip(u8"Г‘Г¬Г®Г¦ГҐГёГј Г®ГЎГ®Г±Г±Г ГІГј ГЄГ®ГЈГ® Г§Г ГµГ®Г·ГҐГёГј!")
                 end
 				imgui.SameLine()
-				if imgui.Button(fa.EYE_SLASH..u8" Скрывать текстдравы: "..(showtextdraw and 'ON' or 'OFF').."", imgui.ImVec2(190, 25)) then
+				if imgui.Button(fa.EYE_SLASH..u8" Г‘ГЄГ°Г»ГўГ ГІГј ГІГҐГЄГ±ГІГ¤Г°Г ГўГ»: "..(showtextdraw and 'ON' or 'OFF').."", imgui.ImVec2(190, 25)) then
                     showtextdraw = not showtextdraw
                     for i = 0, 199999 do
                         sampTextdrawDelete(i)
                     end
                 end
                 if imgui.IsItemHovered() then
-                    imgui.SetTooltip(u8"Функция скрывает все текстдравы\nПримечание: после выключения данной функции будут возвращены не все текстдравы\nБудут возвращены лишь те что рисуются заново.")
+                    imgui.SetTooltip(u8"Г”ГіГ­ГЄГ¶ГЁГї Г±ГЄГ°Г»ГўГ ГҐГІ ГўГ±ГҐ ГІГҐГЄГ±ГІГ¤Г°Г ГўГ»\nГЏГ°ГЁГ¬ГҐГ·Г Г­ГЁГҐ: ГЇГ®Г±Г«ГҐ ГўГ»ГЄГ«ГѕГ·ГҐГ­ГЁГї Г¤Г Г­Г­Г®Г© ГґГіГ­ГЄГ¶ГЁГЁ ГЎГіГ¤ГіГІ ГўГ®Г§ГўГ°Г Г№ГҐГ­Г» Г­ГҐ ГўГ±ГҐ ГІГҐГЄГ±ГІГ¤Г°Г ГўГ»\nГЃГіГ¤ГіГІ ГўГ®Г§ГўГ°Г Г№ГҐГ­Г» Г«ГЁГёГј ГІГҐ Г·ГІГ® Г°ГЁГ±ГіГѕГІГ±Гї Г§Г Г­Г®ГўГ®.")
                 end
-				if imgui.Button(u8(ini.main.separate_msg and 'Выключить' or 'Включить')..u8" разделение сообщения на два", imgui.ImVec2(387, 25)) then
+				if imgui.Button(u8(ini.main.separate_msg and 'Г‚Г»ГЄГ«ГѕГ·ГЁГІГј' or 'Г‚ГЄГ«ГѕГ·ГЁГІГј')..u8" Г°Г Г§Г¤ГҐГ«ГҐГ­ГЁГҐ Г±Г®Г®ГЎГ№ГҐГ­ГЁГї Г­Г  Г¤ГўГ ", imgui.ImVec2(387, 25)) then
                     ini.main.separate_msg = not ini.main.separate_msg
                     save()
                 end
 				
 				imgui.Separator()
-				imgui.Text(fa.DATABASE..u8' Команды скрипта (большая часть возможно не работает)')
+				imgui.Text(fa.DATABASE..u8' ГЉГ®Г¬Г Г­Г¤Г» Г±ГЄГ°ГЁГЇГІГ  (ГЎГ®Г«ГјГёГ Гї Г·Г Г±ГІГј ГўГ®Г§Г¬Г®Г¦Г­Г® Г­ГҐ Г°Г ГЎГ®ГІГ ГҐГІ)')
 				
 				imgui.SetCursorPosX(95)
-				imgui.NewInputText('##SearchBar', buffers.search_cmd, 300, u8'Поиск по списку', 2)
+				imgui.NewInputText('##SearchBar', buffers.search_cmd, 300, u8'ГЏГ®ГЁГ±ГЄ ГЇГ® Г±ГЇГЁГ±ГЄГі', 2)
 				imgui.Separator()
 				imgui.PushItemWidth(130)
 				
@@ -1471,7 +1471,7 @@ local Frame = imgui.OnFrame(
 				end
 				
 			elseif tab[0] == 5 then
-				imgui.Text(fa.PALETTE..u8" Изменение темы:")
+				imgui.Text(fa.PALETTE..u8" Г€Г§Г¬ГҐГ­ГҐГ­ГЁГҐ ГІГҐГ¬Г»:")
 				if imgui.Combo("##1", int_item, ImItems, #item_list) then
 					ini.themesetting.theme = int_item[0]+1
 					save()
@@ -1484,7 +1484,7 @@ local Frame = imgui.OnFrame(
 					save()
 				end
 				imgui.SameLine()
-				imgui.Hint(u8"Изменяет значение закругления окна, чайлдов и пунктов меню (стандартное значение 4.0).", 0.2)
+				imgui.Hint(u8"Г€Г§Г¬ГҐГ­ГїГҐГІ Г§Г­Г Г·ГҐГ­ГЁГҐ Г§Г ГЄГ°ГіГЈГ«ГҐГ­ГЁГї Г®ГЄГ­Г , Г·Г Г©Г«Г¤Г®Гў ГЁ ГЇГіГ­ГЄГІГ®Гў Г¬ГҐГ­Гѕ (Г±ГІГ Г­Г¤Г Г°ГІГ­Г®ГҐ Г§Г­Г Г·ГҐГ­ГЁГҐ 4.0).", 0.2)
 				
 				if imgui.SliderFloat(u8"##RoundedOther", sliders.roundthemecomp, 0, 10, '%.1f') then
 					ini.themesetting.roundedcomp = sliders.roundthemecomp[0]
@@ -1496,9 +1496,9 @@ local Frame = imgui.OnFrame(
 					save()
 				end
 				imgui.SameLine()
-				imgui.Hint(u8"Изменяет значение закругления компонентов, к примеру кнопки, слайдеры и т.д. (стандартное значение 2.0).", 0.2)
+				imgui.Hint(u8"Г€Г§Г¬ГҐГ­ГїГҐГІ Г§Г­Г Г·ГҐГ­ГЁГҐ Г§Г ГЄГ°ГіГЈГ«ГҐГ­ГЁГї ГЄГ®Г¬ГЇГ®Г­ГҐГ­ГІГ®Гў, ГЄ ГЇГ°ГЁГ¬ГҐГ°Гі ГЄГ­Г®ГЇГЄГЁ, Г±Г«Г Г©Г¤ГҐГ°Г» ГЁ ГІ.Г¤. (Г±ГІГ Г­Г¤Г Г°ГІГ­Г®ГҐ Г§Г­Г Г·ГҐГ­ГЁГҐ 2.0).", 0.2)
 
-				if imgui.Checkbox(u8" Обводка окна и компонентов", checkboxes.windowborder) then
+				if imgui.Checkbox(u8" ГЋГЎГўГ®Г¤ГЄГ  Г®ГЄГ­Г  ГЁ ГЄГ®Г¬ГЇГ®Г­ГҐГ­ГІГ®Гў", checkboxes.windowborder) then
 					ini.themesetting.windowborder = checkboxes.windowborder[0]
 					if ini.themesetting.windowborder == true then
 						imgui.GetStyle().WindowBorderSize = 1
@@ -1514,60 +1514,60 @@ local Frame = imgui.OnFrame(
 					save()
 				end
 				imgui.SameLine()
-				imgui.Hint(u8"Включает и выключает легкую обводку окна и компонентов (кнопки, слайдеры и т.д.).", 0.2)
-				if imgui.Checkbox(u8" Центрирование текста пунктов меню", checkboxes.centeredmenu) then
+				imgui.Hint(u8"Г‚ГЄГ«ГѕГ·Г ГҐГІ ГЁ ГўГ»ГЄГ«ГѕГ·Г ГҐГІ Г«ГҐГЈГЄГіГѕ Г®ГЎГўГ®Г¤ГЄГі Г®ГЄГ­Г  ГЁ ГЄГ®Г¬ГЇГ®Г­ГҐГ­ГІГ®Гў (ГЄГ­Г®ГЇГЄГЁ, Г±Г«Г Г©Г¤ГҐГ°Г» ГЁ ГІ.Г¤.).", 0.2)
+				if imgui.Checkbox(u8" Г–ГҐГ­ГІГ°ГЁГ°Г®ГўГ Г­ГЁГҐ ГІГҐГЄГ±ГІГ  ГЇГіГ­ГЄГІГ®Гў Г¬ГҐГ­Гѕ", checkboxes.centeredmenu) then
 					ini.themesetting.centeredmenu = checkboxes.centeredmenu[0]
 					save()
 				end
 				imgui.SameLine()
-				imgui.Hint(u8"Вы можете выровнять текст в меню по своему желанию.", 0.2)
+				imgui.Hint(u8"Г‚Г» Г¬Г®Г¦ГҐГІГҐ ГўГ»Г°Г®ГўГ­ГїГІГј ГІГҐГЄГ±ГІ Гў Г¬ГҐГ­Гѕ ГЇГ® Г±ГўГ®ГҐГ¬Гі Г¦ГҐГ«Г Г­ГЁГѕ.", 0.2)
 
-				if imgui.Checkbox(u8" Новый цвет диалогов", checkboxes.dialogstyle) then
+				if imgui.Checkbox(u8" ГЌГ®ГўГ»Г© Г¶ГўГҐГІ Г¤ГЁГ Г«Г®ГЈГ®Гў", checkboxes.dialogstyle) then
 					ini.themesetting.dialogstyle = checkboxes.dialogstyle[0]
 					save()
 					gotofunc("DialogStyle")
 				end
 				imgui.SameLine()
-				imgui.Hint(u8"Изменяет цвет диалоговых окон похожих как на лаунчере Arizona RP.", 0.2)
+				imgui.Hint(u8"Г€Г§Г¬ГҐГ­ГїГҐГІ Г¶ГўГҐГІ Г¤ГЁГ Г«Г®ГЈГ®ГўГ»Гµ Г®ГЄГ®Г­ ГЇГ®ГµГ®Г¦ГЁГµ ГЄГ ГЄ Г­Г  Г«Г ГіГ­Г·ГҐГ°ГҐ Arizona RP.", 0.2)
 				
-				if imgui.Button(u8'Перезагрузить скрипт '..fa.ARROWS_ROTATE..'') then
+				if imgui.Button(u8'ГЏГҐГ°ГҐГ§Г ГЈГ°ГіГ§ГЁГІГј Г±ГЄГ°ГЁГЇГІ '..fa.ARROWS_ROTATE..'') then
 					showCursor(false, false)
-					sampAddChatMessage(script_name..'{FFFFFF} Скрипт был перезагружен из-за нажатия кнопки {DC4747}"Перезагрузить скрипт"{FFFFFF}!', 0x73b461)
+					sampAddChatMessage(script_name..'{FFFFFF} Г‘ГЄГ°ГЁГЇГІ ГЎГ»Г« ГЇГҐГ°ГҐГ§Г ГЈГ°ГіГ¦ГҐГ­ ГЁГ§-Г§Г  Г­Г Г¦Г ГІГЁГї ГЄГ­Г®ГЇГЄГЁ {DC4747}"ГЏГҐГ°ГҐГ§Г ГЈГ°ГіГ§ГЁГІГј Г±ГЄГ°ГЁГЇГІ"{FFFFFF}!', 0x73b461)
 					thisScript():reload()
 				end
-				if imgui.Button(u8'Выключить скрипт '..fa.POWER_OFF..'', imgui.SameLine()) then 
+				if imgui.Button(u8'Г‚Г»ГЄГ«ГѕГ·ГЁГІГј Г±ГЄГ°ГЁГЇГІ '..fa.POWER_OFF..'', imgui.SameLine()) then 
 					showCursor(false, false)
-					sampAddChatMessage(script_name..'{FFFFFF} Скрипт был выгружен из-за нажатия кнопки {DC4747}"Выключить скрипт"{FFFFFF}!', 0x73b461)
+					sampAddChatMessage(script_name..'{FFFFFF} Г‘ГЄГ°ГЁГЇГІ ГЎГ»Г« ГўГ»ГЈГ°ГіГ¦ГҐГ­ ГЁГ§-Г§Г  Г­Г Г¦Г ГІГЁГї ГЄГ­Г®ГЇГЄГЁ {DC4747}"Г‚Г»ГЄГ«ГѕГ·ГЁГІГј Г±ГЄГ°ГЁГЇГІ"{FFFFFF}!', 0x73b461)
 					thisScript():unload() 
 				end
 				
 				if updatesavaliable then
-					versionold = u8'(не актуальная)'
+					versionold = u8'(Г­ГҐ Г ГЄГІГіГ Г«ГјГ­Г Гї)'
 					imgui.SameLine()
-					if imgui.Button(u8'Скачать обновление '..fa.DOWNLOAD..'', imgui.ImVec2(150, 0)) then
+					if imgui.Button(u8'Г‘ГЄГ Г·Г ГІГј Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ '..fa.DOWNLOAD..'', imgui.ImVec2(150, 0)) then
 						update():download()
 					end
 				else
-					versionold = u8'(актуальная)'
+					versionold = u8'(Г ГЄГІГіГ Г«ГјГ­Г Гї)'
 					imgui.SameLine()
-					if imgui.Button(u8'Проверить обновление '..fa.DOWNLOAD..'', imgui.ImVec2(165, 0)) then
-						sampAddChatMessage(script_name.."{FFFFFF} У вас установлена самая последняя версия скрипта!", 0x73b461)
+					if imgui.Button(u8'ГЏГ°Г®ГўГҐГ°ГЁГІГј Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ '..fa.DOWNLOAD..'', imgui.ImVec2(165, 0)) then
+						sampAddChatMessage(script_name.."{FFFFFF} Г“ ГўГ Г± ГіГ±ГІГ Г­Г®ГўГ«ГҐГ­Г  Г±Г Г¬Г Гї ГЇГ®Г±Г«ГҐГ¤Г­ГїГї ГўГҐГ°Г±ГЁГї Г±ГЄГ°ГЁГЇГІГ !", 0x73b461)
 					end
 				end
 				
 				imgui.Separator()
 				
 				local _, myid = sampGetPlayerIdByCharHandle(playerPed)
-				local mynick = sampGetPlayerNickname(myid) -- наш ник крч
+				local mynick = sampGetPlayerNickname(myid) -- Г­Г Гё Г­ГЁГЄ ГЄГ°Г·
 				local myping = sampGetPlayerPing(select(2, sampGetPlayerIdByCharHandle(PLAYER_PED)))
 				local framerate = imgui.GetIO().Framerate
 				
 				imgui.PushStyleColor(imgui.Col.Text, imgui.ImVec4(0.5, 0.5, 0.5, 1))
-				imgui.Text(fa.USER..u8' Пользователь: '..mynick..'['..myid..u8'] ('..fa.SIGNAL..u8' Пинг: '..myping..')')
-				imgui.Text(fa.CLOCK..u8(string.format(' Текущая дата: %s', os.date("%d.%m.%Y %H:%M:%S"))))
-				imgui.Text(fa.TERMINAL..u8(string.format(' Средняя задержка: %.3f мс | Кадров: (%.1f FPS)', 1000.0 / framerate, framerate)))
-				imgui.Text(fa.FOLDER..u8' Версия: '..thisScript().version..' '..versionold..'')
-				imgui.Text(fa.ADDRESS_CARD..u8' Автор:')
+				imgui.Text(fa.USER..u8' ГЏГ®Г«ГјГ§Г®ГўГ ГІГҐГ«Гј: '..mynick..'['..myid..u8'] ('..fa.SIGNAL..u8' ГЏГЁГ­ГЈ: '..myping..')')
+				imgui.Text(fa.CLOCK..u8(string.format(' Г’ГҐГЄГіГ№Г Гї Г¤Г ГІГ : %s', os.date("%d.%m.%Y %H:%M:%S"))))
+				imgui.Text(fa.TERMINAL..u8(string.format(' Г‘Г°ГҐГ¤Г­ГїГї Г§Г Г¤ГҐГ°Г¦ГЄГ : %.3f Г¬Г± | ГЉГ Г¤Г°Г®Гў: (%.1f FPS)', 1000.0 / framerate, framerate)))
+				imgui.Text(fa.FOLDER..u8' Г‚ГҐГ°Г±ГЁГї: '..thisScript().version..' '..versionold..'')
+				imgui.Text(fa.ADDRESS_CARD..u8' ГЂГўГІГ®Г°:')
 				imgui.SameLine() 
 				imgui.Link('https://github.com/riverya4life', script_author)
 				imgui.PopStyleColor()
@@ -1577,13 +1577,13 @@ local Frame = imgui.OnFrame(
     end
 )
 
-function onReceivePacket(id) -- будет флудить wrong server password до тех пор, пока сервер не откроется
+function onReceivePacket(id) -- ГЎГіГ¤ГҐГІ ГґГ«ГіГ¤ГЁГІГј wrong server password Г¤Г® ГІГҐГµ ГЇГ®Г°, ГЇГ®ГЄГ  Г±ГҐГ°ГўГҐГ° Г­ГҐ Г®ГІГЄГ°Г®ГҐГІГ±Гї
 	if id == 37 then
 		sampSetGamestate(1)
 	end
 end
 
-function ev.onSendPlayerSync(data) -- банни хоп
+function ev.onSendPlayerSync(data) -- ГЎГ Г­Г­ГЁ ГµГ®ГЇ
 	if data.keysData == 40 or data.keysData == 42 then sendOnfootSync(); data.keysData = 32 end
 end
 
@@ -1594,7 +1594,7 @@ function sendOnfootSync()
 	setStructElement(data, 4, 1, 0, false)
 	sampSendOnfootData(data)
 	freeMemory(data)
-end -- тут конец уже
+end -- ГІГіГІ ГЄГ®Г­ГҐГ¶ ГіГ¦ГҐ
 
 function ev.onSetVehicleVelocity(turn, velocity)
     if velocity.x ~= velocity.x or velocity.y ~= velocity.y or velocity.z ~= velocity.z then
@@ -1604,20 +1604,20 @@ function ev.onSetVehicleVelocity(turn, velocity)
 end
 
 function ev.onServerMessage(color, text)
-	if text:find("%[Ошибка%] {FFFFFF}Доступно только с мобильного или PC лаунчера!") then
+	if text:find("%[ГЋГёГЁГЎГЄГ %] {FFFFFF}Г„Г®Г±ГІГіГЇГ­Г® ГІГ®Г«ГјГЄГ® Г± Г¬Г®ГЎГЁГ«ГјГ­Г®ГЈГ® ГЁГ«ГЁ PC Г«Г ГіГ­Г·ГҐГ°Г !") then
 		return false
 	end
 end
 
-function samp.onShowDialog(id, style, title, button1, button2, text) -- Скрытие пароля банковской карты by chapo
-    return {id, text == '{929290}Вы должны подтвердить свой PIN-код к карточке.\nВведите свой код в ниже указаную строку.' and 3 or style, title, button1, button2, text}
+function samp.onShowDialog(id, style, title, button1, button2, text) -- Г‘ГЄГ°Г»ГІГЁГҐ ГЇГ Г°Г®Г«Гї ГЎГ Г­ГЄГ®ГўГ±ГЄГ®Г© ГЄГ Г°ГІГ» by chapo
+    return {id, text == '{929290}Г‚Г» Г¤Г®Г«Г¦Г­Г» ГЇГ®Г¤ГІГўГҐГ°Г¤ГЁГІГј Г±ГўГ®Г© PIN-ГЄГ®Г¤ ГЄ ГЄГ Г°ГІГ®Г·ГЄГҐ.\nГ‚ГўГҐГ¤ГЁГІГҐ Г±ГўГ®Г© ГЄГ®Г¤ Гў Г­ГЁГ¦ГҐ ГіГЄГ Г§Г Г­ГіГѕ Г±ГІГ°Г®ГЄГі.' and 3 or style, title, button1, button2, text}
 end
 
-function samp.onShowDialog(id, style, title, button1, button2, text) -- Скрытие кода складских помещений by хуй его знает, но оригинал chapo
-    return {id, text == '{ffffff}Чтобы открыть этот склад, введите специальный' and 3 or style, title, button1, button2, text}
+function samp.onShowDialog(id, style, title, button1, button2, text) -- Г‘ГЄГ°Г»ГІГЁГҐ ГЄГ®Г¤Г  Г±ГЄГ«Г Г¤Г±ГЄГЁГµ ГЇГ®Г¬ГҐГ№ГҐГ­ГЁГ© by ГµГіГ© ГҐГЈГ® Г§Г­Г ГҐГІ, Г­Г® Г®Г°ГЁГЈГЁГ­Г Г« chapo
+    return {id, text == '{ffffff}Г—ГІГ®ГЎГ» Г®ГІГЄГ°Г»ГІГј ГЅГІГ®ГІ Г±ГЄГ«Г Г¤, ГўГўГҐГ¤ГЁГІГҐ Г±ГЇГҐГ¶ГЁГ Г«ГјГ­Г»Г©' and 3 or style, title, button1, button2, text}
 end
 
--- Functions Mooving Dialog by хуй его знает не помню уже
+-- Functions Mooving Dialog by ГµГіГ© ГҐГЈГ® Г§Г­Г ГҐГІ Г­ГҐ ГЇГ®Г¬Г­Гѕ ГіГ¦ГҐ
 function sampGetDialogSize()
     return memory.getint32(CDialog + 0xC, true),
     memory.getint32(CDialog + 0x10, true)
@@ -1689,23 +1689,23 @@ function patch()
 end
 patch()
 
-function gotofunc(fnc) -- by Gorskin (https://www.blast.hk/members/157398/) (просто удобно юзать пиздец)
-    ------------------------------------Фиксы и прочее-----------------------------
+function gotofunc(fnc) -- by Gorskin (https://www.blast.hk/members/157398/) (ГЇГ°Г®Г±ГІГ® ГіГ¤Г®ГЎГ­Г® ГѕГ§Г ГІГј ГЇГЁГ§Г¤ГҐГ¶)
+    ------------------------------------Г”ГЁГЄГ±Г» ГЁ ГЇГ°Г®Г·ГҐГҐ-----------------------------
     if fnc == "all" then
         callFunction(0x7469A0, 0, 0) --mousefix in pause
-        --------[фикс спавна с бутылкой и сигарой]----------
-        memory.setuint32(0x736F88, 0, false) --вертолет не взрывается много раз
-        memory.fill(0x4217F4, 0x90, 21, false) --исправление спавна с бутылкой
-        memory.fill(0x4218D8, 0x90, 17, false) --исправление спавна с бутылкой
-        memory.fill(0x5F80C0, 0x90, 10, false) --исправление спавна с бутылкой
-        memory.fill(0x5FBA47, 0x90, 10, false) --исправление спавна с бутылкой
+        --------[ГґГЁГЄГ± Г±ГЇГ ГўГ­Г  Г± ГЎГіГІГ»Г«ГЄГ®Г© ГЁ Г±ГЁГЈГ Г°Г®Г©]----------
+        memory.setuint32(0x736F88, 0, false) --ГўГҐГ°ГІГ®Г«ГҐГІ Г­ГҐ ГўГ§Г°Г»ГўГ ГҐГІГ±Гї Г¬Г­Г®ГЈГ® Г°Г Г§
+        memory.fill(0x4217F4, 0x90, 21, false) --ГЁГ±ГЇГ°Г ГўГ«ГҐГ­ГЁГҐ Г±ГЇГ ГўГ­Г  Г± ГЎГіГІГ»Г«ГЄГ®Г©
+        memory.fill(0x4218D8, 0x90, 17, false) --ГЁГ±ГЇГ°Г ГўГ«ГҐГ­ГЁГҐ Г±ГЇГ ГўГ­Г  Г± ГЎГіГІГ»Г«ГЄГ®Г©
+        memory.fill(0x5F80C0, 0x90, 10, false) --ГЁГ±ГЇГ°Г ГўГ«ГҐГ­ГЁГҐ Г±ГЇГ ГўГ­Г  Г± ГЎГіГІГ»Г«ГЄГ®Г©
+        memory.fill(0x5FBA47, 0x90, 10, false) --ГЁГ±ГЇГ°Г ГўГ«ГҐГ­ГЁГҐ Г±ГЇГ ГўГ­Г  Г± ГЎГіГІГ»Г«ГЄГ®Г©
         memory.write(0x53E94C, 0, 1, false) --del fps delay 14 ms
         memory.write(0x555854, 0x90909090, 4, false) --InterioRreflections
         memory.write(0x555858, 0x90, 1, false) --InterioRreflections
         memory.write(0x745BC9, 0x9090, 2, false) --SADisplayResolutions(1920x1080// 16:9)
         memory.fill(0x460773, 0x90, 7, false) --CJFix
         memory.setuint32(12761548, 1051965045, false) -- car speed fps fix
-		memory.setint8(0x58D3DA, 1, true) -- Меняет размер обводки displayGameText
+		memory.setint8(0x58D3DA, 1, true) -- ГЊГҐГ­ГїГҐГІ Г°Г Г§Г¬ГҐГ° Г®ГЎГўГ®Г¤ГЄГЁ displayGameText
         ---------------------------------------------
         if get_samp_version() == "r1" then
             memory.write(sampGetBase() + 0x64ACA, 0xFB, 1, true) --Min FontSize -5
@@ -1715,12 +1715,12 @@ function gotofunc(fnc) -- by Gorskin (https://www.blast.hk/members/157398/) (про
             memory.write(sampGetBase() + 0x64A51, 0x32, 1, true) --PageSize MAX
             memory.write(sampGetBase() + 0xD7AD5, 0x35, 1, true) --PageSize StringInfo
         elseif get_samp_version() == "r3" then
-            memory.write(sampGetBase() + 0x67F2A, 0xFB, 1, true) --Min FontSize -5 (минимальное значение для команды /fontsize)
-            memory.write(sampGetBase() + 0x67F2F, 0x07, 1, true) --Max FontSize 7 (максимальное значение для команды /fontsize)
-            memory.write(sampGetBase() + 0xE9DE0, 0x7420352D, 4, true) --FontSize StringInfo (выводит инфу о минимальном значении при вводе /fontsize)
-            memory.write(sampGetBase() + 0xE9DE4, 0x37206F, 4, true) --FontSize StringInfo (выводит инфу о максимальном значении при вводе /fontsize)
-            memory.write(sampGetBase() + 0x67EB1, 0x32, 1, true) --PageSize MAX (максимальное число для /pagesize)
-            memory.write(sampGetBase() + 0xE9DB5, 0x35, 1, true) --PageSize StringInfo (выводит инфу о максимальном значении при вводе /pagesize)
+            memory.write(sampGetBase() + 0x67F2A, 0xFB, 1, true) --Min FontSize -5 (Г¬ГЁГ­ГЁГ¬Г Г«ГјГ­Г®ГҐ Г§Г­Г Г·ГҐГ­ГЁГҐ Г¤Г«Гї ГЄГ®Г¬Г Г­Г¤Г» /fontsize)
+            memory.write(sampGetBase() + 0x67F2F, 0x07, 1, true) --Max FontSize 7 (Г¬Г ГЄГ±ГЁГ¬Г Г«ГјГ­Г®ГҐ Г§Г­Г Г·ГҐГ­ГЁГҐ Г¤Г«Гї ГЄГ®Г¬Г Г­Г¤Г» /fontsize)
+            memory.write(sampGetBase() + 0xE9DE0, 0x7420352D, 4, true) --FontSize StringInfo (ГўГ»ГўГ®Г¤ГЁГІ ГЁГ­ГґГі Г® Г¬ГЁГ­ГЁГ¬Г Г«ГјГ­Г®Г¬ Г§Г­Г Г·ГҐГ­ГЁГЁ ГЇГ°ГЁ ГўГўГ®Г¤ГҐ /fontsize)
+            memory.write(sampGetBase() + 0xE9DE4, 0x37206F, 4, true) --FontSize StringInfo (ГўГ»ГўГ®Г¤ГЁГІ ГЁГ­ГґГі Г® Г¬Г ГЄГ±ГЁГ¬Г Г«ГјГ­Г®Г¬ Г§Г­Г Г·ГҐГ­ГЁГЁ ГЇГ°ГЁ ГўГўГ®Г¤ГҐ /fontsize)
+            memory.write(sampGetBase() + 0x67EB1, 0x32, 1, true) --PageSize MAX (Г¬Г ГЄГ±ГЁГ¬Г Г«ГјГ­Г®ГҐ Г·ГЁГ±Г«Г® Г¤Г«Гї /pagesize)
+            memory.write(sampGetBase() + 0xE9DB5, 0x35, 1, true) --PageSize StringInfo (ГўГ»ГўГ®Г¤ГЁГІ ГЁГ­ГґГі Г® Г¬Г ГЄГ±ГЁГ¬Г Г«ГјГ­Г®Г¬ Г§Г­Г Г·ГҐГ­ГЁГЁ ГЇГ°ГЁ ГўГўГ®Г¤ГҐ /pagesize)
         end
         ----------------------------------------------------------------------------
     end
@@ -1728,7 +1728,7 @@ function gotofunc(fnc) -- by Gorskin (https://www.blast.hk/members/157398/) (про
 	if fnc == "OpenMenu" then
         riverya.switch()
 	end
-	-----------------------Главная-----------------------
+	-----------------------ГѓГ«Г ГўГ­Г Гї-----------------------
 	if fnc == "BlockWeather" or fnc == "all" then
         if get_samp_version() == "r1" then
             if ini.main.blockweather then
@@ -1844,10 +1844,10 @@ function gotofunc(fnc) -- by Gorskin (https://www.blast.hk/members/157398/) (про
         callFunction(0x40CFD0, 0, 0)
         local newram = ("%d"):format(tonumber(get_memory()))
         if ini.cleaner.cleaninfo then
-            sampAddChatMessage(script_name.."{FFFFFF} Памяти до: {dc4747}"..oldram.." МБ. {FFFFFF}Памяти после: {dc4747}"..newram.." МБ. {FFFFFF}Очищено: {dc4747}"..oldram - newram.." МБ.", 0x73b461)
+            sampAddChatMessage(script_name.."{FFFFFF} ГЏГ Г¬ГїГІГЁ Г¤Г®: {dc4747}"..oldram.." ГЊГЃ. {FFFFFF}ГЏГ Г¬ГїГІГЁ ГЇГ®Г±Г«ГҐ: {dc4747}"..newram.." ГЊГЃ. {FFFFFF}ГЋГ·ГЁГ№ГҐГ­Г®: {dc4747}"..oldram - newram.." ГЊГЃ.", 0x73b461)
         end
     end
-	-----------------------Исправления блять-----------------------
+	-----------------------Г€Г±ГЇГ°Г ГўГ«ГҐГ­ГЁГї ГЎГ«ГїГІГј-----------------------
 	if fnc == "FixBloodWood" or fnc == "all" then
         if ini.fixes.fixbloodwood then
             writeMemory(0x49EE63+1, 4, 0, true)--fix blood wood
@@ -1881,11 +1881,11 @@ function gotofunc(fnc) -- by Gorskin (https://www.blast.hk/members/157398/) (про
 	end
 	if fnc == "MoneyFontFix" or fnc == "all" then
 		if ini.fixes.moneyfontfix then
-			memory.setint32(0x866C94, 0x6430302524, true) -- Позитивные деньги с удалением нулей
-			memory.setint64(0x866C8C, 0x64303025242D, true) -- Негативные деньги с удалением нулей
+			memory.setint32(0x866C94, 0x6430302524, true) -- ГЏГ®Г§ГЁГІГЁГўГ­Г»ГҐ Г¤ГҐГ­ГјГЈГЁ Г± ГіГ¤Г Г«ГҐГ­ГЁГҐГ¬ Г­ГіГ«ГҐГ©
+			memory.setint64(0x866C8C, 0x64303025242D, true) -- ГЌГҐГЈГ ГІГЁГўГ­Г»ГҐ Г¤ГҐГ­ГјГЈГЁ Г± ГіГ¤Г Г«ГҐГ­ГЁГҐГ¬ Г­ГіГ«ГҐГ©
         else
-            memory.setint32(0x866C94, 0x6438302524, true) -- Позитивные деньги стандартное значение
-			memory.setint64(0x866C8C, 0x64373025242D, true) -- Негативные деньги стандартное значение
+            memory.setint32(0x866C94, 0x6438302524, true) -- ГЏГ®Г§ГЁГІГЁГўГ­Г»ГҐ Г¤ГҐГ­ГјГЈГЁ Г±ГІГ Г­Г¤Г Г°ГІГ­Г®ГҐ Г§Г­Г Г·ГҐГ­ГЁГҐ
+			memory.setint64(0x866C8C, 0x64373025242D, true) -- ГЌГҐГЈГ ГІГЁГўГ­Г»ГҐ Г¤ГҐГ­ГјГЈГЁ Г±ГІГ Г­Г¤Г Г°ГІГ­Г®ГҐ Г§Г­Г Г·ГҐГ­ГЁГҐ
         end
 	end
 	if fnc == "StarsOnDisplay" or fnc == "all" then
@@ -1947,7 +1947,7 @@ function gotofunc(fnc) -- by Gorskin (https://www.blast.hk/members/157398/) (про
         end
         checkboxes.fixcrosshair[0] = ini.fixes.fixcrosshair
 	end
-	-----------------------Команды и прочее-----------------------
+	-----------------------ГЉГ®Г¬Г Г­Г¤Г» ГЁ ГЇГ°Г®Г·ГҐГҐ-----------------------
 	if fnc == "ShowNicks" then
         if ini.main.shownicks then
             memory.setint16(sampGetBase() + 0x70D40, 0xC390, true)
@@ -1997,7 +1997,7 @@ function gotofunc(fnc) -- by Gorskin (https://www.blast.hk/members/157398/) (про
             memory.setint8(0xBA676C, 2)
         end
 	end
-	-----------------------Настройки-----------------------
+	-----------------------ГЌГ Г±ГІГ°Г®Г©ГЄГЁ-----------------------
 	if fnc == "DialogStyle" or fnc == "all" then
 		if ini.themesetting.dialogstyle then 
 			setDialogColor(0xCC38303c, 0xCC363050, 0xCC75373d, 0xCC583d46) 
@@ -2073,7 +2073,7 @@ function imgui.Hint(text, delay, action)
                 imgui.PushStyleColor(imgui.Col.WindowBg, imgui.ImVec4(0.11, 0.11, 0.11, 1.00))
                     imgui.BeginTooltip()
                     imgui.PushTextWrapPos(450)
-                    imgui.TextColored(imgui.GetStyle().Colors[imgui.Col.ButtonHovered], u8'Подсказка:')
+                    imgui.TextColored(imgui.GetStyle().Colors[imgui.Col.ButtonHovered], u8'ГЏГ®Г¤Г±ГЄГ Г§ГЄГ :')
                     imgui.TextUnformatted(text)
                     if action ~= nil then
                         imgui.TextColored(imgui.GetStyle().Colors[imgui.Col.TextDisabled], '\n '..action)
@@ -2115,12 +2115,12 @@ function imgui.BeginTitleChild(str_id, size, rounding, offset, panelBool)
     DL:AddText(imgui.ImVec2(posS.x + offset, posS.y - 10 - (sizeT.y / 2)), imgui.GetColorU32Vec4(imgui.GetStyle().Colors[imgui.Col.Text]), title) end
 end
 
--- labels - Array - названия элементов меню
--- selected - imgui.ImInt() - выбранный пункт меню
--- size - imgui.ImVec2() - размер элементов
--- speed - float - скорость анимации выбора элемента (необязательно, по стандарту - 0.2)
--- centering - bool - центрирование текста в элементе (необязательно, по стандарту - false)
-function imgui.CustomMenu(labels, selected, size, speed, centering) -- by хуй его знает не помню
+-- labels - Array - Г­Г Г§ГўГ Г­ГЁГї ГЅГ«ГҐГ¬ГҐГ­ГІГ®Гў Г¬ГҐГ­Гѕ
+-- selected - imgui.ImInt() - ГўГ»ГЎГ°Г Г­Г­Г»Г© ГЇГіГ­ГЄГІ Г¬ГҐГ­Гѕ
+-- size - imgui.ImVec2() - Г°Г Г§Г¬ГҐГ° ГЅГ«ГҐГ¬ГҐГ­ГІГ®Гў
+-- speed - float - Г±ГЄГ®Г°Г®Г±ГІГј Г Г­ГЁГ¬Г Г¶ГЁГЁ ГўГ»ГЎГ®Г°Г  ГЅГ«ГҐГ¬ГҐГ­ГІГ  (Г­ГҐГ®ГЎГїГ§Г ГІГҐГ«ГјГ­Г®, ГЇГ® Г±ГІГ Г­Г¤Г Г°ГІГі - 0.2)
+-- centering - bool - Г¶ГҐГ­ГІГ°ГЁГ°Г®ГўГ Г­ГЁГҐ ГІГҐГЄГ±ГІГ  Гў ГЅГ«ГҐГ¬ГҐГ­ГІГҐ (Г­ГҐГ®ГЎГїГ§Г ГІГҐГ«ГјГ­Г®, ГЇГ® Г±ГІГ Г­Г¤Г Г°ГІГі - false)
+function imgui.CustomMenu(labels, selected, size, speed, centering) -- by ГµГіГ© ГҐГЈГ® Г§Г­Г ГҐГІ Г­ГҐ ГЇГ®Г¬Г­Гѕ
     local bool = false
 	local centering = ini.themesetting.centeredmenu
     speed = speed and speed or 0.500
