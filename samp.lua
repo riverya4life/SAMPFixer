@@ -676,7 +676,7 @@ function update() -- by chapo (https://www.blast.hk/threads/114312/)
             downloadUrlToFile(decodeJson(response.text)['url'], thisScript().path, function (id, status, p1, p2)
                 print('Скачиваю '..decodeJson(response.text)['url']..' в '..thisScript().path)
                 if status == dlstatus.STATUSEX_ENDDOWNLOAD then
-					sampAddChatMessage(script_name.."{FFFFFF} Скрипт {42B166}успешно обновлен!{ffffff} Перезагрузка...", 0x73b461)
+					sampAddChatMessage(script_name.."{FFFFFF} Скрипт {42B166}успешно обновлен{ffffff}! Перезагрузка...", 0x73b461)
                     thisScript():reload()
                 end
             end)
