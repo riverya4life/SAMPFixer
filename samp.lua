@@ -70,6 +70,9 @@ local ini = inicfg.load(inicfg.load({
 		language = 1,
 		moneyfontstyle = 3,
 		separate_msg = true,
+		bindkeys = false,
+		smilesystem = false,
+		gender = 0,
     },
     hphud = {
         active = false,
@@ -92,7 +95,7 @@ local ini = inicfg.load(inicfg.load({
 		placename = false,
 		animidle = false,
 		intrun = true,
-		fixcrosshair = true
+		fixcrosshair = true,
 	},
 	themesetting = {
 		theme = 6,
@@ -377,6 +380,49 @@ function translate(str)
 	return language[ini.main.language + 1][str]
 end]]
 
+local listUpdate = {
+
+    {
+        v = 'Beta v. 0.8',
+        context = "- Добавлены анимации 2-х минутного бездействия как в одиночной игре\n- Добавлена пасхалка в самом меню\n- Добавлена система смайлов, бинды, немного изменена кастомизация\n- Возвращены названия улиц и районов\n- Обновлена система автообновлений (теперь обновление будет скачано после того как нажмете кнопку 'Обновить')\n- Добавлен лог обновлений\n- Фиксы мелких багов"
+    },
+
+    {
+        v = 'Beta v. 0.7',
+        context = "- Скрипт переписан с Imgui на Mimgui для оптимизации\n- Добавлено удобное меню с функциями, по типу FPS UP, кастомизация интерфейса, изменение команд скрипта и т.д.\n- Была проведена чистка кода\n- Добавлен gotofunc by Gorskin\n- Добавлена функция разделения длинного сообщения в чат на два by Gorskin\n- Много фиксов"
+    },
+
+    {
+        v = 'Beta v. 0.6',
+        context = "- Добавлено скрытие описания by Cosmo\n- Автообновление\n- Добавлена проверка на автора\n- Вывод текста в чат только после того, как игрок подключится к серверу\n- Скрипт переписан на Imgui"
+    },
+
+    {
+        v = 'Beta v. 0.5',
+        context = "- Фикс конфигурации v.2\n- Добавлена возможность изменять цвет диалоговых окон\n- Был добавлен патч радара в слежке\n- Диалоговые окна теперь можно перемещать по экрану\n- Было добавлено скрытие пароля от банковской карты и кода складских помещений"
+    },
+
+    {
+        v = 'Beta v. 0.4',
+        context = "- Фикс конфигурации"
+    },
+
+    {
+        v = 'Beta v. 0.3',
+        context = "- Исправление блок. клавиш Alt + Enter, который вызывал краш у многих\n- Добавление патча, который позволял запускать игру за считанные секунды"
+    },
+
+    {
+        v = 'Beta v. 0.2',
+        context = "- Исправлены диалоги\n- Изменены адреса памяти\n- Оптимизация\n- Еще фиксы чего-то"
+    },
+
+    {
+        v = 'Beta v. 0.1',
+        context = "- Запуск бета-теста скрипта"
+    },
+}
+
 local created = false
 chatcommands = {'c', 's', 'b', 'w', 'r', 'm', 'd', 'f', 'rb', 'fb', 'rt', 'pt', 'ft', 'cs', 'ct', 'fam', 'vr', 'al', 'me', 'do', 'todo', 'seeme', 'fc', 'u', 'jb', 'j', 'jf', 'a', 'o'}
 bi = false
@@ -415,8 +461,25 @@ local texincommands = {
 "Изменить положение показателя ХП в цифрах",
 "Изменить стиль показателя ХП в цифрах",
 "Отображать надпись \"hp\" рядом с цифрами в ХП худе",
-"Изменяет цвет диалогов как на лаунчере Arizona RP",
+"Изменяет цвет диалогов как на лаунчере Arizona RP"
 }
+
+local textscount = 0
+local texts = {
+	"Ты нахуя на меня нажал?", 
+	"По ебалу давно не получал?", 
+	"Ща тебя как пиздану нахуй!", 
+	"Мразь блять, переставай!!!",
+	"Сука ну все, еще один раз и я тебя по ебалу буду бить!", 
+	"*Бьёт тебя по ебалу*",
+}
+
+local gender = new.int(ini.main.gender)
+local arr_gender = {
+	u8"Мужской", 
+	u8"Женский",
+}
+local genders = new['const char*'][#arr_gender](arr_gender)
 
 ------------------------------------ [Клинер ёбаный блять] --------------------------------------------
 local function round(num, idp)
@@ -558,6 +621,9 @@ local ui_meta = {
 local riverya = { state = false, duration = 0.4555 }
 setmetatable(riverya, ui_meta)
 
+local modalriverya = { state = false, duration = 0.4555 }
+setmetatable(modalriverya, ui_meta)
+
 CloseButton = function(str_id, value, rounding) -- by Gorskin (edit) (https://www.blast.hk/members/157398/)
 	size = size or 20
 	rounding = rounding or 5
@@ -610,12 +676,12 @@ function update() -- by chapo (https://www.blast.hk/threads/114312/)
             downloadUrlToFile(decodeJson(response.text)['url'], thisScript().path, function (id, status, p1, p2)
                 print('Скачиваю '..decodeJson(response.text)['url']..' в '..thisScript().path)
                 if status == dlstatus.STATUSEX_ENDDOWNLOAD then
-                    sampAddChatMessage('Скрипт {42B166}успешно обновлен{ffffff}! Перезагрузка...', -1)
+					sampAddChatMessage(script_name.."{FFFFFF} Скрипт {42B166}успешно обновлен{ffffff}! Перезагрузка...", 0x73b461)
                     thisScript():reload()
                 end
             end)
         else
-            sampAddChatMessage('{dc4747}[Ошибка]{ffffff} Невозможно установить обновление! Код ошибки: {dc4747}'..response.status_code, -1)
+			sampAddChatMessage(script_name.."{dc4747}[Ошибка]{ffffff} Невозможно установить обновление! Код ошибки: {dc4747}"..response.status_code, 0x73b461)
         end
     end
     return f
@@ -729,6 +795,79 @@ function main()
             wait(15000) -- задержка
             sampSetGamestate(1)
         end
+        ---------------- -- прицен на транспорте by Cosmo (https://www.blast.hk/threads/72683/)
+		if isCharInAnyCar(playerPed) then
+			local car = storeCarCharIsInNoSave(playerPed)
+			local cX, cY, cZ = getCarCoordinates(car)
+			if vehHaveGun() then
+				fX, fY, fZ = getOffsetFromCarInWorldCoords(car, 0, 128, 0)
+				local result, tPoint = processLineOfSight(cX, cY, cZ, fX, fY, fZ, true, false, true, true, false, false, false, true)
+				if result then fX, fY, fZ = tPoint.pos[1], tPoint.pos[2], tPoint.pos[3] end
+				local _, gx, gy, z, _, _ = convert3DCoordsToScreenEx(fX, fY, fZ)
+				if z > 1 then renderCrosshair(gx, gy) end
+			elseif isCharInModel(playerPed, 432) then
+				local oX, oY, oZ = getOffsetFromCarInWorldCoords(car, 0, 0, 1.1)
+		        if not rail then rail = createObject(1551, oX, oY, oZ) end
+		        if rail then
+		        	local x, y = getRhinoCannonCorner(car)
+			        attachObjectToCar(rail, car, 0.0, 0.0, 1.1, y, 0.0, x)
+			        local x1, y1, z1 = getOffsetFromObjectInWorldCoords(rail, 0.0, 6.5, 0.0)
+			        local x2, y2, z2 = getOffsetFromObjectInWorldCoords(rail, 0.0, 67.0, .0)
+			        local result, tPoint = processLineOfSight(x1, y1, z1, x2, y2, z2, true, false, true, true, false, false, false, true)
+					if result then x2, y2, z2 = tPoint.pos[1], tPoint.pos[2], tPoint.pos[3] end
+					local _, gx, gy, z, _, _ = convert3DCoordsToScreenEx(x2, y2, z2)
+					if z > 1 then renderCrosshair(gx, gy) end
+				end
+			end
+		else
+			if rail then deleteObject(rail); rail = nil end
+		end
+        ----------------
+		if ini.main.bindkeys then
+			if isKeyJustPressed(VK_L) and not sampIsChatInputActive() and not sampIsDialogActive() and not isPauseMenuActive() and not isSampfuncsConsoleActive() then 
+				sampSendChat("/lock") 
+			end
+
+			if isKeyJustPressed(VK_K) and not sampIsChatInputActive() and not sampIsDialogActive() and not isPauseMenuActive() and not isSampfuncsConsoleActive() then 
+				sampSendChat("/key") 
+			end
+
+			if isKeyJustPressed(VK_X) and not sampIsChatInputActive() and not sampIsDialogActive() and not isPauseMenuActive() and not isSampfuncsConsoleActive() then 
+				sampSendChat("/style") 
+			end
+			
+			if isKeyJustPressed(VK_P) and not sampIsChatInputActive() and not sampIsDialogActive() and not isPauseMenuActive() and not isSampfuncsConsoleActive() then 
+				sampSendChat("/phone") 
+			end
+
+			if isKeyJustPressed(VK_5) and not sampIsChatInputActive() and not sampIsDialogActive() and not isPauseMenuActive() and not isSampfuncsConsoleActive() then 
+				sampSendChat("/mask") 
+			end
+
+			if isKeyJustPressed(VK_4) and not sampIsChatInputActive() and not sampIsDialogActive() and not isPauseMenuActive() and not isSampfuncsConsoleActive() then 
+				sampSendChat("/armour") 
+			end
+			
+			if isKeyJustPressed(VK_3) and not sampIsChatInputActive() and not sampIsDialogActive() and not isPauseMenuActive() and not isSampfuncsConsoleActive() then 
+				sampSendChat("/anim 3") 
+			end
+					   
+			if isKeyJustPressed(VK_Z) and not sampIsChatInputActive() and not sampIsDialogActive() and not isPauseMenuActive() and not isSampfuncsConsoleActive() then 
+				sampSendChat("/usedrugs 1") 
+			end
+			 
+			if isKeyDown(VK_MENU) and isKeyJustPressed(VK_NUMPAD3) and not sampIsChatInputActive() and not sampIsDialogActive() and not isPauseMenuActive() and not isSampfuncsConsoleActive() then 
+				sampSendChat("/eat") 
+			end
+
+			if isKeyDown(VK_MENU) and isKeyJustPressed(VK_R) and not sampIsChatInputActive() and not sampIsDialogActive() and not isPauseMenuActive() and not isSampfuncsConsoleActive() then 
+				sampSendChat("/repcar") 
+			end
+
+			if isKeyDown(VK_MENU) and isKeyJustPressed(VK_2) and not sampIsChatInputActive() and not sampIsDialogActive() and not isPauseMenuActive() and not isSampfuncsConsoleActive() then 
+				sampSendChat("/fillcar") 
+			end
+		end
         ----------------
         if ini.hphud.active == true then
             if sampIsLocalPlayerSpawned() and not created and sampIsChatVisible() and ini.main.showhud == true then
@@ -800,10 +939,10 @@ function main()
             riverya.switch()
         end
 		
-		if ini.settings.blockweather == true and memory.read(0xC81320, 2, true) ~= ini.settings.weather then
+		if ini.main.blockweather == true and memory.read(0xC81320, 2, true) ~= ini.main.weather then
 			gotofunc("SetWeather") 
 		end
-		if ini.settings.blocktime == true and memory.read(0xB70153, 1, true) ~= ini.settings.hours then 
+		if ini.main.blocktime == true and memory.read(0xB70153, 1, true) ~= ini.main.hours then 
 			gotofunc("SetTime") 
 		end
 		
@@ -854,6 +993,13 @@ function main()
         CDialog = sampGetDialogInfoPtr()
         CDXUTDialog = memory.getuint32(CDialog + 0x1C)
 
+    end
+end
+
+function ev.onShowDialog(dialogId) 
+    if dialogId == 1000 then
+        sampSendDialogResponse(1000,1,0,0)
+        return false
     end
 end
 
@@ -917,17 +1063,34 @@ function onSendRpc(id, bs, priority, reliability, orderingChannel, shiftTs)
 end
 
 function onReceiveRpc(id, bs)
-	if ini.settings.blocktime then
+	if ini.main.blocktime then
         if id == 29 or id == 94 or id == 30 then
 		    return false
         end
 	end
-    if id == 152 and ini.settings.blockweather then
+    if id == 152 and ini.main.blockweather then
         return false
     end
 end
 
 function samp.onSendChat(msg)
+	if ini.main.smilesys == true then
+        if ini.main.gender == 0 then
+            for q, a in pairs(smiletextmale) do
+                if msg == q then
+                    sampSendChat(a)
+                    return false
+                end
+            end
+        elseif ini.main.gender == 1 then
+            for q, a in pairs(smiletextfemale) do
+                if msg == q then
+                    sampSendChat(a)
+                    return false
+                end
+            end
+        end
+    end
     ----------------------- separate messages by Gorskin (https://www.blast.hk/members/157398/)
     if ini.main.separate_msg == true then
         if bi then bi = false; return end
@@ -1135,7 +1298,11 @@ local Frame = imgui.OnFrame(
 			imgui.PopStyleColor()
 			--------------------[Не тыкай на меня долбоеб]--------------------
 			if imgui.IsItemClicked(0) then
-				sampAddChatMessage(script_name.." {FFFFFF}Перестань на меня тыкать заебал", 0x73b461)
+				textscount = textscount + 1
+				if textscount > #texts then
+					textscount = 6
+				end
+				sampAddChatMessage(script_name.."{ffffff} "..texts[textscount], 0x73b461)
 			end
 			--------------------[Не тыкай на меня долбоеб]--------------------
 			
@@ -1441,14 +1608,50 @@ local Frame = imgui.OnFrame(
                 if imgui.IsItemHovered() then
                     imgui.SetTooltip(u8"Функция скрывает все текстдравы\nПримечание: после выключения данной функции будут возвращены не все текстдравы\nБудут возвращены лишь те что рисуются заново.")
                 end
-				if imgui.Button(u8(ini.main.separate_msg and 'Выключить' or 'Включить')..u8" разделение сообщения на два", imgui.ImVec2(387, 25)) then
+				
+				if imgui.Button(fa.KEYBOARD..u8(ini.main.bindkeys and ' Выключить' or ' Включить')..u8" бинды", imgui.ImVec2(190, 25)) then
+					ini.main.bindkeys = not ini.main.bindkeys
+                    save()
+                end
+
+                imgui.SameLine()
+                if imgui.Button(fa.FACE_SMILE..u8" Cистема смайлов", imgui.ImVec2(190, 25)) then
+					imgui.OpenPopup(fa.FACE_SMILE..u8" Система смайлов") 
+                end
+                if imgui.BeginPopupModal(fa.FACE_SMILE..u8" Система смайлов", new.bool(true), imgui.WindowFlags.NoScrollbar + imgui.WindowFlags.NoResize) then
+                	imgui.SetWindowSizeVec2(imgui.ImVec2(375, 300))
+				    imgui.Text(u8"Ваш пол:")
+		            imgui.SameLine()
+		            imgui.PushItemWidth(100)
+		            if imgui.Combo("##1", gender, genders, #arr_gender) then
+		            	ini.main.gender = gender[0]
+		            	save()
+		            end
+		            imgui.PopItemWidth()
+		            imgui.SameLine()
+		            imgui.SameLine()
+		            if imgui.Button(fa.FACE_SMILE..u8(ini.main.smilesys and ' Выключить' or ' Включить')..u8" систему смайлов") then
+						ini.main.smilesys = not ini.main.smilesys
+	                    save()
+	                end
+		            if imgui.CollapsingHeader(u8"Доступные смайлы") then
+		                if ini.main.gender == 0 then
+		                    imgui.PushTextWrapPos(imgui.GetWindowSize().x - 40 );
+		                    imgui.Text(u8(dostupsmiletext0))
+		                elseif ini.main.gender == 1 then
+		                    imgui.PushTextWrapPos(imgui.GetWindowSize().x - 40 );
+		                    imgui.Text(u8(dostupsmiletext1))
+		                end
+		            end
+					imgui.EndPopup()
+			    end
+
+			    if imgui.Button(fa.COMMENTS..u8(ini.main.separate_msg and ' Выключить' or ' Включить')..u8" разделение сообщения на два", imgui.ImVec2(387, 25)) then
                     ini.main.separate_msg = not ini.main.separate_msg
                     save()
                 end
 				
 				imgui.Separator()
-				imgui.Text(fa.DATABASE..u8' Команды скрипта (большая часть возможно не работает)')
-				
 				imgui.SetCursorPosX(95)
 				imgui.NewInputText('##SearchBar', buffers.search_cmd, 300, u8'Поиск по списку', 2)
 				imgui.Separator()
@@ -1544,8 +1747,23 @@ local Frame = imgui.OnFrame(
 				if updatesavaliable then
 					versionold = u8'(не актуальная)'
 					imgui.SameLine()
-					if imgui.Button(u8'Скачать обновление '..fa.DOWNLOAD..'', imgui.ImVec2(150, 0)) then
-						update():download()
+					if imgui.Button(u8'Проверить обновление '..fa.DOWNLOAD..'', imgui.ImVec2(165, 0)) then
+						imgui.OpenPopup(fa.DOWNLOAD..u8" Доступно обновление!")
+					end
+					if imgui.BeginPopupModal(fa.DOWNLOAD..u8" Доступно обновление!", new.bool(true), imgui.WindowFlags.NoScrollbar + imgui.WindowFlags.NoResize) then
+						imgui.SetWindowSizeVec2(imgui.ImVec2(305, 130))
+						imgui.Text(u8"Вам доступно обновление по данным с Github!")
+						imgui.Text(u8"Желаете обновиться с "..thisScript().version..u8" до актуальной версии?")
+						imgui.NewLine()
+						imgui.SetCursorPosX(5)
+						if imgui.Button(u8"Обновить", imgui.ImVec2(295, 20)) then
+							sampAddChatMessage(script_name.."{FFFFFF} Скрипт {42B166}обновляется...", 0x73b461)
+							update():download()
+						end
+						if imgui.Button(u8"Закрыть", imgui.ImVec2(295, 20)) then 
+							imgui.CloseCurrentPopup() 
+						end
+						imgui.EndPopup()
 					end
 				else
 					versionold = u8'(актуальная)'
@@ -1554,6 +1772,23 @@ local Frame = imgui.OnFrame(
 						sampAddChatMessage(script_name.."{FFFFFF} У вас установлена самая последняя версия скрипта!", 0x73b461)
 					end
 				end
+				imgui.SameLine()
+				if imgui.Button(fa.CLOCK) then
+					imgui.OpenPopup(fa.CLOCK..u8" Лог обновлений") 
+                end
+                if imgui.BeginPopupModal(fa.CLOCK..u8" Лог обновлений", new.bool(true), imgui.WindowFlags.NoScrollbar + imgui.WindowFlags.NoResize) then
+                	imgui.SetWindowSizeVec2(imgui.ImVec2(475, 300))
+				    if imgui.CollapsingHeader(fa.CLOCK .. u8' Лог обновлений', imgui.TreeNodeFlags.DefaultOpen) then
+						for k,v in pairs(listUpdate) do
+							local header = v.v
+							if k == 1 then header = fa.FIRE .. u8(' ' .. header .. ' | Актуальная версия') end
+							if imgui.CollapsingHeader(header) then
+								imgui.TextWrapped(u8(v.context))
+							end
+						end
+					end
+					imgui.EndPopup()
+			    end
 				
 				imgui.Separator()
 				
@@ -1570,7 +1805,36 @@ local Frame = imgui.OnFrame(
 				imgui.Text(fa.ADDRESS_CARD..u8' Автор:')
 				imgui.SameLine() 
 				imgui.Link('https://github.com/riverya4life', script_author)
+				imgui.SameLine() 
+				if imgui.Button(fa.CLOUD) then 
+					imgui.OpenPopup(u8"Автор: riverya4life") 
+				end
 				imgui.PopStyleColor()
+				if imgui.BeginPopupModal(u8"Автор: riverya4life", new.bool(true), imgui.WindowFlags.NoTitleBar + imgui.WindowFlags.NoScrollbar + imgui.WindowFlags.NoResize) then
+					imgui.SetWindowSizeVec2(imgui.ImVec2(170, 85))
+					imgui.SetCursorPosX(5)
+					if imgui.Button('Discord', imgui.ImVec2(50, 50)) then 
+						link = 'https://discord.gg/Q69xQnzR6m'
+						os.execute('explorer "'..link..'"')
+					end
+					imgui.SameLine()
+					imgui.SetCursorPosX(60)
+					if imgui.Button('GitHub', imgui.ImVec2(50, 50)) then 
+						link = 'https://github.com/riverya4life'
+						os.execute('explorer "'..link..'"')
+					end
+					imgui.SameLine()
+					imgui.SetCursorPosX(115)
+					if imgui.Button(u8'TG', imgui.ImVec2(50, 50)) then 
+						link = 'https://t.me/riverya4lifeoff'
+						os.execute('explorer "'..link..'"')
+					end
+					imgui.SetCursorPosX(5)
+					if imgui.Button(u8'Закрыть', imgui.ImVec2(160, 20)) then 
+						imgui.CloseCurrentPopup() 
+					end
+					imgui.EndPopup()
+				end
 			end
 			imgui.EndChild()
         imgui.End()
@@ -1650,6 +1914,28 @@ function join_argb(a, r, g, b)
     argb = bit.bor(argb, bit.lshift(r, 16)) -- r
     argb = bit.bor(argb, bit.lshift(a, 24)) -- a
     return argb
+end
+
+function vehHaveGun() -- прицен на транспорте by Cosmo (https://www.blast.hk/threads/72683/)
+	for _, v in ipairs({425, 447, 464, 476, 520}) do
+		if isCharInModel(playerPed, v) then 
+			return true 
+		end
+	end
+	return false
+end
+
+function renderCrosshair(x, y) -- прицен на транспорте by Cosmo (https://www.blast.hk/threads/72683/)
+	renderDrawPolygon(x, y, 5, 5, 8, 0, 0xFF606060)
+	renderDrawPolygon(x, y, 3, 3, 8, 0, 0xFFFFFFFF)
+end
+
+function getRhinoCannonCorner(carHandle) -- прицен на транспорте by Cosmo (https://www.blast.hk/threads/72683/)
+	local memory = require 'memory'
+	local ptr = getCarPointer(carHandle)
+	local x = memory.getfloat(ptr + 0x94C, false) * 180.0 / math.pi
+	local y = memory.getfloat(ptr + 0x950, false) * 180.0 / math.pi
+	return x, y
 end
 
 function samp.onShowTextDraw(id, data)
@@ -2018,10 +2304,10 @@ function imgui.Ques(text)
     end
 end
 
-function imgui.CenterText(text)
+--[[function imgui.CenterText(text)
     imgui.SetCursorPosX((imgui.GetWindowWidth() - imgui.CalcTextSize(u8(text)).x) / 2)
     imgui.Text(text)
-end
+end]]
 
 function imgui.NewInputText(lable, val, width, hint, hintpos)
     local hint = hint and hint or ''
@@ -2120,7 +2406,7 @@ end
 -- size - imgui.ImVec2() - размер элементов
 -- speed - float - скорость анимации выбора элемента (необязательно, по стандарту - 0.2)
 -- centering - bool - центрирование текста в элементе (необязательно, по стандарту - false)
-function imgui.CustomMenu(labels, selected, size, speed, centering) -- by хуй его знает не помню
+function imgui.CustomMenu(labels, selected, size, speed, centering) -- by CaJlaT (edit)(https://www.blast.hk/threads/13380/post-793402)
     local bool = false
 	local centering = ini.themesetting.centeredmenu
     speed = speed and speed or 0.500
@@ -2215,6 +2501,155 @@ end
 function saturate(f) 
 	return f < 0 and 0 or (f > 255 and 255 or f) 
 end
+
+------- смайлы ---------------------
+
+-- мужской
+smiletextmale = {
+    ['=('] = '/me выглядит огорченным, чем-то расстроен',
+    ['('] = '/me слегка расстроен, не подаёт виду',
+    [':('] = '/me выглядит подавленным, грустит',
+    [':(('] = '/me очень расстроился, выглядит убитым',
+    [':с'] = '/me печально опустил нижнюю губу',
+    ['о_о'] = '/me выпучил глаза от удивления',
+    ['o_o'] = '/me выпучил глаза от удивления',
+    ['О_О'] = '/me очень сильно шокирован',
+    ['O_O'] = '/me очень сильно шокирован',
+    [':о'] = '/me слегка удивлён',
+    [':o'] = '/me слегка удивлён',
+    [':О'] = '/me сильно удивился, охает',
+    [':O'] = '/me сильно удивился, охает',
+    [':/'] = '/me испытывает легкое недовольство',
+    ['-_-'] = '/me испытывает недовольное отвращение',
+    ['=_='] = '/me испытывает недовольное отвращение',
+    [':D'] = '/me добродушно смеется',
+    ['xD'] = '/me угарает во весь голос, закрывая глаза со смеху',
+    ['c:'] = '/me скруглил щёки, доволен как ребёнок',
+    ['с:'] = '/me скруглил щёки, доволен как ребёнок',
+    ['C:'] = '/me сильно радуется с блестящими глазами',
+    ['С:'] = '/me сильно радуется с блестящими глазами',
+    [':*'] = '/me посылает воздушный поцелуй',
+    ['=)'] = '/me улыбается как придурок с лёгкой иронией',
+    [')'] = '/me легонько улыбается',
+    ['))'] = '/me давит лыбу, чем-то доволен',
+    [':)'] = '/me добродушно улыбается',
+    [':))'] = '/me лыбится во весь рот',
+    [';)'] = '/me легонько подмигивает',
+    [';('] = '/me тихо плачет неторопливыми слезами',
+    [';(('] = '/me ревёт, захлёбывается слезами',
+    [':-)'] = '/me улыбается как глупый клоун',
+}
+
+-- женский
+smiletextfemale = {
+    ['=('] = '/me выглядит огорченной, чем-то расстроена',
+    ['('] = '/me слегка расстроена, не подаёт виду',
+    [':('] = '/me выглядит подавленной, грустит',
+    [':(('] = '/me очень расстроилась, выглядит убитой',
+    [':с'] = '/me печально опустила нижнюю губу',
+    ['о_о'] = '/me выпучила глаза от удивления',
+    ['o_o'] = '/me выпучила глаза от удивления',
+    ['О_О'] = '/me очень сильно шокирована',
+    ['O_O'] = '/me очень сильно шокирована',
+    [':о'] = '/me слегка удивлена',
+    [':o'] = '/me слегка удивлена',
+    [':О'] = '/me сильно удивилась, охает',
+    [':O'] = '/me сильно удивилась, охает',
+    [':/'] = '/me испытывает легкое недовольство',
+    ['-_-'] = '/me испытывает недовольное отвращение',
+    ['=_='] = '/me испытывает недовольное отвращение',
+    [':D'] = '/me добродушно смеется',
+    ['xD'] = '/me угарает во весь голос, закрывая глаза со смеху',
+    ['c:'] = '/me скруглила щёки, довольна как ребёнок',
+    ['с:'] = '/me скруглила щёки, довольна как ребёнок',
+    ['C:'] = '/me сильно радуется с блестящими глазами',
+    ['С:'] = '/me сильно радуется с блестящими глазами',
+    [':*'] = '/me посылает воздушный поцелуй',
+    ['=)'] = '/me улыбается как дурочка с лёгкой иронией',
+    [')'] = '/me легонько улыбается',
+    ['))'] = '/me давит лыбу, чем-то довольна',
+    [':)'] = '/me добродушно улыбается',
+    [':))'] = '/me лыбится во весь рот',
+    [';)'] = '/me легонько подмигивает',
+    [';('] = '/me тихо плачет неторопливыми слезами',
+    [';(('] = '/me ревёт, захлёбывается слезами',
+    [':-)'] = '/me улыбается как глупый клоун',
+}
+
+-------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------
+dostupsmiletext0 = [[
+=( — выглядит огорченным, чем-то расстроен
+( — слегка расстроен, не подаёт виду
+:( — выглядит подавленным, грустит
+:(( — очень расстроился, выглядит убитым
+:с — печально опустил нижнюю губу
+о_о — выпучил глаза от удивления
+o_o — выпучил глаза от удивления
+О_О — очень сильно шокирован
+O_O — очень сильно шокирован
+:о — слегка удивлён
+:o — слегка удивлён
+:О — сильно удивился, охает
+:O сильно удивился, охает
+:/ — испытывает легкое недовольство
+-_- — испытывает недовольное отвращение
+=_= — испытывает недовольное отвращение
+:D — добродушно смеется
+xD — угарает во весь голос, закрывая глаза со смеху
+c: — скруглил щёки, доволен как ребёнок
+с: — скруглил щёки, доволен как ребёнок
+C: — сильно радуется с блестящими глазами.
+С: — сильно радуется с блестящими глазами.
+:* — посылает воздушный поцелуй
+=) — улыбается как придурок с лёгкой иронией
+) — легонько улыбается
+)) — давит лыбу, чем-то доволен
+:) — добродушно улыбается
+:)) — лыбится во весь рот
+;) — легонько подмигивает
+;( — тихо плачет неторопливыми слезами
+;(( — ревёт, захлёбывается слезами
+:-) — улыбается как глупый клоун
+
+]]
+
+dostupsmiletext1 = [[
+=( — выглядит огорченной, чем-то расстроена
+( — слегка расстроена, не подаёт виду
+:( — выглядит подавленной, грустит
+:(( — очень расстроилась, выглядит убитой
+:с — печально опустила нижнюю губу
+:c — печально опустила нижнюю губу
+о_о — выпучила глаза от удивления
+o_o — выпучила глаза от удивления
+О_О — очень сильно шокирована
+O_O — очень сильно шокирована
+:о — слегка удивлёна
+:o — слегка удивлёна
+:О — сильно удивилась, охает
+:O — сильно удивилась, охает
+:/ — испытывает легкое недовольство
+-_- — испытывает недовольное отвращение
+=_= — испытывает сильное отвращение
+:D — добродушно смеется
+xD — угарает во весь голос, закрывая глаза со смеху
+с: — скруглила щёки, довольна как ребёнок
+c: — скруглила щёки, довольна как ребёнок
+С: — сильно радуется с блестящими глазами
+C: — сильно радуется с блестящими глазами
+:* — посылает воздушный поцелуй
+=) — улыбается как дура с лёгкой иронией
+) — легонько улыбается
+)) — давит лыбу, чем-то довольна
+:) — добродушно улыбается
+:)) — лыбится во весь рот
+;) — легонько подмигивает
+;( — тихо плачет неторопливыми слезами
+;(( — ревёт, захлёбывается слезами
+:-) — улыбается как глупый клоун
+
+]]
 -------------------------------------------------------------
 
 function SwitchTheStyle(theme)
@@ -2295,6 +2730,7 @@ function SwitchTheStyle(theme)
         colors[clr.PlotLinesHovered]       = ImVec4(1.00, 0.43, 0.35, 1.00)
         colors[clr.PlotHistogram]          = ImVec4(0.90, 0.70, 0.00, 1.00)
         colors[clr.PlotHistogramHovered]   = ImVec4(1.00, 0.60, 0.00, 1.00)
+		colors[clr.ModalWindowDimBg]      = imgui.ImVec4(0.00, 0.00, 0.00, 0.70)
     elseif theme == 2 then
         colors[clr.FrameBg]                = ImVec4(0.48, 0.16, 0.16, 0.54)
 		colors[clr.FrameBgHovered]         = ImVec4(0.98, 0.26, 0.26, 0.40)
@@ -2333,6 +2769,7 @@ function SwitchTheStyle(theme)
 		colors[clr.PlotLinesHovered]       = ImVec4(1.00, 0.43, 0.35, 1.00)
 		colors[clr.PlotHistogram]          = ImVec4(0.90, 0.70, 0.00, 1.00)
 		colors[clr.PlotHistogramHovered]   = ImVec4(1.00, 0.60, 0.00, 1.00)
+		colors[clr.ModalWindowDimBg]      = imgui.ImVec4(0.00, 0.00, 0.00, 0.70)
     elseif theme == 3 then
         colors[clr.WindowBg]               = ImVec4(0.0, 0.0, 0.0, 1.00)
         colors[clr.FrameBg]                = ImVec4(0.48, 0.23, 0.16, 0.54)
@@ -2372,6 +2809,7 @@ function SwitchTheStyle(theme)
         colors[clr.ScrollbarGrabActive]    = ImVec4(0.51, 0.51, 0.51, 1.00)
         colors[clr.PlotHistogram]          = ImVec4(0.90, 0.70, 0.00, 1.00)
         colors[clr.PlotHistogramHovered]   = ImVec4(1.00, 0.60, 0.00, 1.00)
+		colors[clr.ModalWindowDimBg]      = imgui.ImVec4(0.00, 0.00, 0.00, 0.70)
     elseif theme == 4 then
         colors[clr.WindowBg]               = ImVec4(0.0, 0.0, 0.0, 1.00)
         colors[clr.FrameBg]                = ImVec4(0.16, 0.48, 0.42, 0.54)
@@ -2411,6 +2849,7 @@ function SwitchTheStyle(theme)
         colors[clr.ScrollbarGrabActive]    = ImVec4(0.51, 0.51, 0.51, 1.00)
         colors[clr.PlotHistogram]          = ImVec4(0.90, 0.70, 0.00, 1.00)
         colors[clr.PlotHistogramHovered]   = ImVec4(1.00, 0.60, 0.00, 1.00)
+		colors[clr.ModalWindowDimBg]      = imgui.ImVec4(0.00, 0.00, 0.00, 0.70)
     elseif theme == 5 then
         colors[clr.WindowBg]               = ImVec4(0.0, 0.0, 0.0, 1.00)
         colors[clr.Text]                   = ImVec4(0.80, 0.80, 0.83, 1.00)
@@ -2447,6 +2886,7 @@ function SwitchTheStyle(theme)
         colors[clr.PlotHistogram]          = ImVec4(0.40, 0.39, 0.38, 0.63)
         colors[clr.PlotHistogramHovered]   = ImVec4(0.25, 1.00, 0.00, 1.00)
         colors[clr.TextSelectedBg]         = ImVec4(0.25, 1.00, 0.00, 0.43)
+		colors[clr.ModalWindowDimBg]      = imgui.ImVec4(0.00, 0.00, 0.00, 0.70)
     elseif theme == 6 then
         colors[clr.WindowBg]               = ImVec4(0.0, 0.0, 0.0, 1.00)
         colors[clr.Text]                 = ImVec4(1.00, 1.00, 1.00, 1.00)
@@ -2486,6 +2926,7 @@ function SwitchTheStyle(theme)
         colors[clr.PlotHistogram]        = ImVec4(9.99, 9.99, 9.90, 1.00)
         colors[clr.PlotHistogramHovered] = ImVec4(9.99, 9.99, 9.90, 1.00)
         colors[clr.TextSelectedBg]       = ImVec4(0.54, 0.00, 1.00, 0.34)
+		colors[clr.ModalWindowDimBg]      = imgui.ImVec4(0.00, 0.00, 0.00, 0.70)
     elseif theme == 7 then
         colors[clr.WindowBg]               = ImVec4(0.0, 0.0, 0.0, 1.00)
         colors[clr.Text]                   = ImVec4(0.80, 0.80, 0.83, 1.00)
@@ -2522,6 +2963,7 @@ function SwitchTheStyle(theme)
         colors[clr.PlotHistogram]          = ImVec4(0.40, 0.39, 0.38, 0.63)
         colors[clr.PlotHistogramHovered]   = ImVec4(0.25, 1.00, 0.00, 1.00)
         colors[clr.TextSelectedBg]         = ImVec4(0.25, 1.00, 0.00, 0.43)
+		colors[clr.ModalWindowDimBg]      = imgui.ImVec4(0.00, 0.00, 0.00, 0.70)
     elseif theme == 8 then
         colors[clr.WindowBg]               = ImVec4(0.0, 0.0, 0.0, 1.00)
         colors[clr.Text]                   = ImVec4(0.95, 0.96, 0.98, 1.00)
@@ -2558,6 +3000,7 @@ function SwitchTheStyle(theme)
         colors[clr.PlotHistogram]          = ImVec4(0.90, 0.70, 0.00, 1.00)
         colors[clr.PlotHistogramHovered]   = ImVec4(1.00, 0.60, 0.00, 1.00)
         colors[clr.TextSelectedBg]         = ImVec4(0.25, 1.00, 0.00, 0.43)
+		colors[clr.ModalWindowDimBg]      = imgui.ImVec4(0.00, 0.00, 0.00, 0.70)
     elseif theme == 9 then
         colors[clr.WindowBg]               = ImVec4(0.0, 0.0, 0.0, 1.00)
         colors[clr.Text]                   = ImVec4(0.860, 0.930, 0.890, 0.78)
@@ -2594,6 +3037,7 @@ function SwitchTheStyle(theme)
         colors[clr.PlotHistogram]          = ImVec4(0.860, 0.930, 0.890, 0.63)
         colors[clr.PlotHistogramHovered]   = ImVec4(0.455, 0.198, 0.301, 1.00)
         colors[clr.TextSelectedBg]         = ImVec4(0.455, 0.198, 0.301, 0.43)
+		colors[clr.ModalWindowDimBg]      = imgui.ImVec4(0.00, 0.00, 0.00, 0.70)
     elseif theme == 10 then
         colors[clr.WindowBg]               = ImVec4(0.0, 0.0, 0.0, 1.00)
         colors[clr.Text]                   = ImVec4(0.90, 0.90, 0.90, 1.00)
@@ -2633,6 +3077,7 @@ function SwitchTheStyle(theme)
         colors[clr.PlotHistogram]          = ImVec4(0.00, 0.69, 0.33, 1.00)
         colors[clr.PlotHistogramHovered]   = ImVec4(0.00, 0.80, 0.38, 1.00)
         colors[clr.TextSelectedBg]         = ImVec4(0.00, 0.69, 0.33, 0.72)
+		colors[clr.ModalWindowDimBg]      = imgui.ImVec4(0.00, 0.00, 0.00, 0.70)
     elseif theme == 11 then
         colors[clr.WindowBg]               = ImVec4(0.0, 0.0, 0.0, 1.00)
         colors[clr.FrameBg]                = ImVec4(0.46, 0.11, 0.29, 0.54)
@@ -2668,6 +3113,7 @@ function SwitchTheStyle(theme)
         colors[clr.ScrollbarGrab]          = ImVec4(0.31, 0.31, 0.31, 1.00)
         colors[clr.ScrollbarGrabHovered]   = ImVec4(0.41, 0.41, 0.41, 1.00)
         colors[clr.ScrollbarGrabActive]    = ImVec4(0.51, 0.51, 0.51, 1.00)
+		colors[clr.ModalWindowDimBg]      = imgui.ImVec4(0.00, 0.00, 0.00, 0.70)
     elseif theme == 12 then
         colors[clr.WindowBg]               = ImVec4(0.0, 0.0, 0.0, 1.00)
         colors[clr.Text]                   = ImVec4(1.00, 1.00, 1.00, 1.00)
@@ -2707,6 +3153,7 @@ function SwitchTheStyle(theme)
         colors[clr.PlotHistogram]          = ImVec4(0.90, 0.70, 0.00, 1.00)
         colors[clr.PlotHistogramHovered]   = ImVec4(1.00, 0.60, 0.00, 1.00)
         colors[clr.TextSelectedBg]         = ImVec4(0.26, 0.59, 0.98, 0.35)
+		colors[clr.ModalWindowDimBg]      = imgui.ImVec4(0.00, 0.00, 0.00, 0.70)
     elseif theme == 13 then
         colors[clr.WindowBg]               = ImVec4(0.0, 0.0, 0.0, 1.00)
         colors[clr.PopupBg]                = ImVec4(0.08, 0.08, 0.08, 0.96)
@@ -2741,6 +3188,7 @@ function SwitchTheStyle(theme)
         colors[clr.ScrollbarGrab]          = ImVec4(0.33, 0.33, 0.33, 1.00)
         colors[clr.ScrollbarGrabHovered]   = ImVec4(0.39, 0.39, 0.39, 1.00)
         colors[clr.ScrollbarGrabActive]    = ImVec4(0.48, 0.48, 0.48, 1.00)
+		colors[clr.ModalWindowDimBg]      = imgui.ImVec4(0.00, 0.00, 0.00, 0.70)
         
     elseif theme == 14 then
         colors[imgui.Col.WindowBg]               = ImVec4(0.06, 0.06, 0.06, 0.90)
@@ -2776,5 +3224,8 @@ function SwitchTheStyle(theme)
         colors[imgui.Col.ScrollbarGrab]          = ImVec4(0.33, 0.33, 0.33, 1.00)
         colors[imgui.Col.ScrollbarGrabHovered]   = ImVec4(0.39, 0.39, 0.39, 1.00)
         colors[imgui.Col.ScrollbarGrabActive]    = ImVec4(0.48, 0.48, 0.48, 1.00)
+		colors[clr.ModalWindowDimBg]      = imgui.ImVec4(0.00, 0.00, 0.00, 0.70)
     end
 end
+
+----------------------------------------------------- [end script] ----------------------------------------------------------
