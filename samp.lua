@@ -1,6 +1,6 @@
 script_name = "[SAMPFixer]"
 script_author = "riverya4life."
-script_version(0.8)
+script_version(0.83)
 
 --==================================== [ Information for Users or scripters ] ====================================--
 --[[ Thanks to Black Jesus for cleo GameFixer 2.0 and Gorskin for lua GameFixer 3.1 (memory addresses) 
@@ -18,11 +18,15 @@ local samp = require("lib.samp.events")
 local memory = require("memory")
 local ev = require("samp.events")
 local vkeys = require("vkeys")
+local rkeys = require 'rkeys'
 local imgui = require("mimgui")
 local wm = require("windows")
 local encoding = require("encoding")
 local fa = require('fAwesome6')
 local ffi = require("ffi")
+-- rp guns by Gorskin --
+local weapons = require 'lib.game.weapons'
+-- rp guns by Gorskin --
 
 encoding.default = 'CP1251'
 u8 = encoding.UTF8
@@ -35,6 +39,7 @@ no_description_text = "* Описание отсутствует *"
 
 --- Config fastmap by Gorskin
 reduceZoom = true
+imgui.HotKey = require("mimhot").HotKey
 
 ------------------------[ конфиг нахуй блять ] -------------------
 local inicfg = require "inicfg"
@@ -73,6 +78,7 @@ local ini = inicfg.load(inicfg.load({
 		bindkeys = false,
 		smilesystem = false,
 		gender = 0,
+		rpguns = false,
     },
     hphud = {
         active = false,
@@ -96,6 +102,7 @@ local ini = inicfg.load(inicfg.load({
 		animidle = false,
 		intrun = true,
 		fixcrosshair = true,
+		patchduck = true,
 	},
 	themesetting = {
 		theme = 6,
@@ -129,8 +136,19 @@ local ini = inicfg.load(inicfg.load({
 		showhud = "/showhud",
 		dialogstyle = "/dialogstyle",
 	},
+	hotkeys = {
+		openmenukey = "[113]",
+	},
 }, directIni))
 inicfg.save(ini, directIni)
+
+--== HotKeys ==--
+local tLastKeys = {} -- предыдущие хоткеи активации
+
+local ActOpenMenuKey = {
+	v = decodeJson(ini.hotkeys.openmenukey)
+}
+--== HotKeys ==--
 
 function save()
     inicfg.save(ini, directIni)
@@ -145,6 +163,7 @@ local CDialog, CDXUTDialog = 0, 0
 local onspawned = false
 local offspawnchecker = true
 local bscreen = false
+local bcontrol = false
 local showtextdraw = false
 local updatesavaliable = false
 local MAX_SAMP_MARKERS = 63
@@ -194,6 +213,7 @@ local checkboxes = {
 	animidle = new.bool(ini.fixes.animidle),
 	intrun = new.bool(ini.fixes.intrun),
 	fixcrosshair = new.bool(ini.fixes.fixcrosshair),
+	patchduck = new.bool(ini.fixes.patchduck),
     --------------------------------------------------
 	nop_samp_keys_F1 = new.bool(ini.nop_samp_keys.key_F1),
     nop_samp_keys_F4 = new.bool(ini.nop_samp_keys.key_F4),
@@ -222,7 +242,7 @@ local imguiCheckboxesFixesAndPatches = {
     [u8" Cнять лимит на ограничение денег в худе"] = {var = checkboxes.nolimitmoneyhud, cfg = "nolimitmoneyhud", fnc = "NoLimitMoneyHud"},
     [u8" Вернуть солнце"] = {var = checkboxes.sunfix, cfg = "sunfix", fnc = "SunFix"},
     [u8" Вернуть траву"] = {var = checkboxes.grassfix, cfg = "grassfix", fnc = "GrassFix"},
-    [u8" Вернуть названия районов"] = {var = checkboxes.placename, cfg = "placename", fnc = "_"},
+    [u8" Вернуть названия районов"] = {var = checkboxes.placename, cfg = "placename", fnc = "PlaceName"},
     [u8" Удаление нулей в худе"] = {var = checkboxes.moneyfontfix, cfg = "moneyfontfix", fnc = "MoneyFontFix"},
     [u8" Звёзды на экране"] = {var = checkboxes.starsondisplay, cfg = "starsondisplay", fnc = "StarsOnDisplay"},
     [u8" Фикс чувствительности мышки"] = {var = checkboxes.sensfix, cfg = "sensfix", fnc = "FixSensitivity"},
@@ -231,6 +251,7 @@ local imguiCheckboxesFixesAndPatches = {
     [u8" Фикс длинных рук"] = {var = checkboxes.longarmfix, cfg = "longarmfix", fnc = "FixLongArm"},
 	[u8" Исправление бега в интерьерах"] = {var = checkboxes.intrun, cfg = "intrun", fnc = "InteriorRun"},
 	[u8" Исправление белой точки на прицеле"] = {var = checkboxes.fixcrosshair, cfg = "fixcrosshair", fnc = "FixCrosshair"},
+	[u8" Патч анимации приседа с оружием"] = {var = checkboxes.patchduck, cfg = "patchduck", fnc = "PatchDuck"},
 }
 
 local imguiInputsCmdEditor = {
@@ -243,144 +264,12 @@ local imguiInputsCmdEditor = {
     [u8" Новый цвет диалоговых окон"] = {var = buffers.cmd_dialogstyle, cfg = "dialogstyle"},
 }
 
--- Language
---[[local languageNames = {'English', u8'Українська', u8'Русский'}
-local languageIndex = new.int(ini.main.languageIndex)
-local language = {
-	[1] = {
-		------------------------------------ [Menu] --------------------------------------------
-		tab1 = fa.HOUSE..u8' Home',
-		tab2 = fa.DESKTOP..u8' Boost FPS', 
-		tab3 = fa.GEAR..u8' Fixes', 
-		tab4 = fa.GAMEPAD..u8' Прочее', 
-		tab5 = fa.BARS..u8' Other',
-		------------------------------------ [Settings] --------------------------------------------
-		switchoff = u8'Switch off',
-		switchon = u8'Turn on',
-		switchoffchat = u8'off',
-		switchonchat = u8'enabled',
-		------------------------------------ [Themes] --------------------------------------------
-		theme1 = u8'Blue',
-		theme2 = u8'Red',
-		theme3 = u8'Brown',
-		theme4 = u8'Aqua',
-		theme5 = u8'Black',
-		theme6 = u8'Violet',
-		theme7 = u8'Dark-orange',
-		theme8 = u8'Grey',
-		theme9 = u8'Cherrish',
-		theme10 = u8'Green',
-		theme11 = u8'Purple',
-		theme12 = u8'Dark-green',
-		theme13 = u8'Orange',
-		------------------------------------ [Menu Home] --------------------------------------------
-		slidersetweather = u8'Weather',
-		slidersetweatherquestext = u8'Changes the game weather to its own.',
-		slidersettime = u8'Time',
-		slidersettimequestext = u8'Changes the game time to your own.',
-		checkboxblockweather = u8' Block weather change by the server',
-		checkboxblocktime = u8' Block the server from changing the time',
-		comboanimationmoney = fa.CIRCLE_DOLLAR_TO_SLOT..u8' Animation of adding / decreasing money:',
-		slideralphamap = fa.CLOUD_SUN_RAIN..u8' Transparency of the map on the radar:',
-		slideralphamapquestext = u8'Changes the transparency of the map on the radar. The map itself in the ESC menu will be normal (value from 0 to 255).',
-		buttonvsync = u8'vertical sync',
-		buttonvsynctextchat = u8'Vertical Sync',
-		------------------------------------ [Boost FPS] --------------------------------------------
-		checkboxpostfx = u8' Disable post-processing',
-		checkboxpostfxquestext = u8' Disables post-processing if you have a weak PC.',
-		checkboxdisableeffects = u8' Disable effects',
-		checkboxdisableeffectsquestext = u8' Disables effects in the game if you have a weak PC.',
-		collapsingheaderdrawdist = fa.EYE..u8' Render distance',
-		checkboxgivemedist = u8' Enable the ability to change the rendering',
-		sliderdrawdist = fa.EYE..u8' Main draw distance:',
-		sliderdrawdistquestext = u8'Changes the main draw distance.',
-		sliderdrawdistair = fa.PLANE_UP..u8' Draw distance in air transport:',
-		sliderdrawdistairquestext = u8'Changes the draw distance in air transport.',
-		sliderdrawdistpara = fa.PARACHUTE_BOX..u8' Draw distance when using a parachute:',
-		sliderdrawdistparaquestext = u8'Changes the draw distance when using a parachute.',
-		sliderfog = fa.SMOG..u8' Fog rendering distance:',
-		sliderfogquestext = u8'Changes the fog rendering distance',
-		sliderlod = fa.MOUNTAIN..u8' Lod draw distance:',
-		sliderlodquestext = u8'Changes the draw distance of lods.',
-		collapsingheadercleanmemory = fa.EYE..u8' Clearing memory',
-		checkboxautoclean = u8' Enable auto clear memory',
-		checkboxclearinfo = u8' Show memory clear message',
-		sliderlimitmemory = u8'Auto clear limit: %d MB',
-		buttonclearmemory = u8'Clear memory',
-		------------------------------------ [Fixes] --------------------------------------------
-		checkboxfixbloodwood = u8' Fixing blood when wood is damaged',
-		checkboxfixbloodwoodquestext = u8'Correction of blood when a tree is damaged.',
-		checkboxnolimitmoneyhud = u8' Remove the limit on limiting money in the HUD',
-		checkboxnolimitmoneyhudquestext = u8'Removes the limit on the amount of money in the HUD if you have more than $999.999.999',
-		checkboxsunfix = u8' Bring back the sun',
-		checkboxsunfixquestext = u8'Brings back the sun from single player.',
-		checkboxgrassfix = u8' Bring back the grass',
-		checkboxgrassfixquestext = u8'Returns the grass from the single player game (effects in the settings should be medium +). After shutting down, you must restart the game to remove the grass completely!',
-		checkboxmoneyfontfix = u8' Removing Zeros in HUD',
-		checkboxmoneyfontfixquestext = u8'Removes zeros in HUD, instead of 000.000.350$ there will be 350$',
-		checkboxstarsondisplay = u8' Stars on the screen',
-		checkboxstarsondisplayquestext = u8'After enabling this feature, you must restart the game for the stars to appear on the screen.',
-		checkboxsensfix = u8' Mouse sensitivity fix',
-		checkboxsensfixquestext = u8'Corrects the sensitivity of the mouse along the X and Y axes.',
-		checkboxfixblackroads = u8' Fix black roads',
-		checkboxfixblackroadsquestext = u8'Fixes the display of black roads at low game settings.',
-		checkboxlongarmfix = u8' Fix long arms',
-		checkboxlongarmfixquestext = u8'Corrects stretching of the arms on two-wheeled vehicles.',
-		------------------------------------ [Other] --------------------------------------------
-		buttonclearchat = fa.ERASER..u8' Clear chat',
-		buttonclearchatitemhovered = u8'To quickly clear a chat\nenter the following command into the chat: ',
-		buttonssmode = fa.CAMERA..u8' SS Mode: ',
-		buttonssmodeitemhovered = u8'The function turns on the green screen\nConvenient when you take a screenshot of the situation',
-		buttonantiafk = fa.KEYBOARD..u8' AntiAFK: ',
-		buttonantiafkitemhovered = fa.EXCLAMATION..u8' The function turns on Anti-AFK\nif you don't need the game not to pause after\ncursing\n(Dangerous, because you can get banned!)',
-		buttongivebeer1 = fa.FIRE..u8' Get a bottle of beer',
-		buttongivebeer2 = fa.FIRE..u8' Get a bottle of beer 2',
-		buttongivesprunk = fa.FIRE..u8' Get Sprunk',
-		buttongivecigarette = fa.FIRE..u8' Get a cigarette',
-		buttonpiss = fa.WATER..u8' Piss',
-		buttonhidetextdraws = fa.EYE_SLASH..u8' Hide textdraws: ',
-		buttonhidetextdrawsitemhovered = u8'This function hides all textdraws\nNote: when this function is turned off, not all textdraws will be returned\nOnly those that are redrawn will be returned.'
-		------------------------------------ [Settings] --------------------------------------------
-		combochangetheme = fa.HOUSE..u8' Changing Theme:',
-		sliderroundthemequestext = u8'Changes the window's rounding value (default value is 4.0).',
-		sliderroundcompquestext = u8'Changes the rounding value of other window components such as buttons and so on (default value is 2.0).',
-		sliderroundmenuquestext = u8'Changes the rounding value of menu selections and childs (default value is 4.0).',
-		checkboxdialogstyle = u8' New dialog color',
-		checkboxdialogstylequestext = u8' Changes the color of dialog boxes similar to those on the Arizona RP launcher.',
-		buttonreloadscript = u8'Reload script ',
-		buttonturnoffscript = u8'Turn off script ',
-		
-	}
-}]]
-
---[[-- Language
-local languageint = new.int(ini.main.language-1)
-local languagelist = {u8'Русский', u8'English', u8'Українська'}
-local languageitems = new['const char*'][#languagelist](languagelist)
-
-local language = {
-	[1] = {
-		textTest = u8'Баланс заполнен',
-		textTest2 = u8'Майнить',
-		textChooseLanguage = u8'Выберите язык',
-	},
-	[2] = {
-		textTest = u8'Balance is full',
-		textTest2 = u8'Mine',
-		textChooseLanguage = u8'Choose language',
-	},
-	[3] = {
-		textTest = u8'Баланс заповнений',
-		textTest2 = u8'Майнити',
-		textChooseLanguage = u8'Оберіть мову',
-	}
-}
-
-function translate(str)
-	return language[ini.main.language + 1][str]
-end]]
-
 local listUpdate = {
+
+	{
+        v = 'Beta v. 0.83',
+        context = "- Добавлен патч, который позволяет садится на корточки с любым оружием\n- Исправление системы обновления\n- Система смайлов и биндов помещены в отдельные окна\n- Добавлена система отыгровок оружия\n- Добавлен патч с фотоаппаратом при отключенной пост-обработке\n- Убран лишний мусор с кода"
+    },
 
     {
         v = 'Beta v. 0.8',
@@ -443,26 +332,6 @@ local tbmtext = {
     u8"Стандартная",
 }
 local tmtext = new['const char*'][#tbmtext](tbmtext)
-
-local texincommands = {
-"Показать/Скрыть ники игроков",
-"Показать/Скрыть ХП игроков",
-"Включить/Выключить радио в транспорте",
-"Включить/Выключить удаление всего оружия на \"DELETE\"",
-"Очистить чат",
-"Показать/Скрыть чат",
-"Показать/Скрыть HUD",
-"Изменить время",
-"Изменить погоду",
-"Включить/Выключить изменение прорисовки",
-"Изменить прорисовку",
-"Включить/Выключить полоску 160hp",
-"Включить/Выключить показатель ХП в цифрах",
-"Изменить положение показателя ХП в цифрах",
-"Изменить стиль показателя ХП в цифрах",
-"Отображать надпись \"hp\" рядом с цифрами в ХП худе",
-"Изменяет цвет диалогов как на лаунчере Arizona RP"
-}
 
 local textscount = 0
 local texts = {
@@ -621,9 +490,6 @@ local ui_meta = {
 local riverya = { state = false, duration = 0.4555 }
 setmetatable(riverya, ui_meta)
 
-local modalriverya = { state = false, duration = 0.4555 }
-setmetatable(modalriverya, ui_meta)
-
 CloseButton = function(str_id, value, rounding) -- by Gorskin (edit) (https://www.blast.hk/members/157398/)
 	size = size or 20
 	rounding = rounding or 5
@@ -688,16 +554,20 @@ function update() -- by chapo (https://www.blast.hk/threads/114312/)
 end
 
 function riveryahello()
-	sampAddChatMessage(script_name.."{FFFFFF} Загружен! Открыть меню: {dc4747}F2 {FFFFFF}или {dc4747}"..ini.commands.openmenu..". {FFFFFF}Автор: {dc4747}"..script_author, 0x73b461)
+	sampAddChatMessage(script_name.."{FFFFFF} Загружен! Открыть меню: {dc4747}"..table.concat(rkeys.getKeysName(ActOpenMenuKey.v), " + ").."{ffffff} или {dc4747}"..ini.commands.openmenu..". {FFFFFF}Автор: {dc4747}"..script_author, 0x73b461)
 	
 	local lastver = update():getLastVersion()
-    if thisScript().version ~= lastver then
+    if thisScript().version < lastver then
 		updatesavaliable = true
         sampRegisterChatCommand('riveryaupd', function()
             update():download()
         end)
 		sampAddChatMessage(script_name..'{ffffff} Вышло обновление скрипта ({dc4747}'..thisScript().version..'{ffffff} -> {42B166}'..lastver..'{ffffff}), введите {dc4747}/riveryaupd{ffffff} для обновления!', 0x73b461)
 		addOneOffSound(0, 0, 0, 1058)
+	end
+	if thisScript().version > lastver then
+		updatesavaliable = false
+
 	end
 end
 
@@ -707,17 +577,25 @@ function main()
 	_, myid = sampGetPlayerIdByCharHandle(playerPed)
     mynick = sampGetPlayerNickname(myid) -- наш ник крч
 	
+	-- rp guns by Gorskin --------------------
+	rp_thread = lua_thread.create_suspended(rp_weapons)
+    rp_thread:run()
+	-- rp guns by Gorskin --------------------
+	
 	local duration = 0.3 -- Описание персонажа by Cosmo (https://www.blast.hk/threads/84975/)
 	local max_alpha = 255 -- Описание персонажа by Cosmo (https://www.blast.hk/threads/84975/)
 	local start = os.clock() -- Описание персонажа by Cosmo (https://www.blast.hk/threads/84975/)
 	local finish = nil -- Описание персонажа by Cosmo (https://www.blast.hk/threads/84975/)
 	
-	-- Unlock CPlaceName::Process (CUserDisplay::Process)
-    --[[memory.hex2bin('E876FEFFFF', 0x5720A5, 5)
-    memory.protect(0x5720A5, 5, memory.unprotect(0x5720A5, 5))
-    memory.setuint8(0x58D540, 0x74, true) -- jnz to jn]]
-	
 	gotofunc("all")--load all func
+
+	---=== HotKeys ===---
+	bindOpenmenu = rkeys.registerHotKey(ActOpenMenuKey.v, true, function()
+        if not sampIsCursorActive() then
+            riverya.switch()
+        end
+    end)
+    ---=== HotKeys ===---
 	
 	-- анимация бездействия by vegas~ (https://www.blast.hk/threads/151523/)
 	for i, k in pairs(player.anims) do
@@ -795,7 +673,7 @@ function main()
             wait(15000) -- задержка
             sampSetGamestate(1)
         end
-        ---------------- -- прицен на транспорте by Cosmo (https://www.blast.hk/threads/72683/)
+        ---------------- -- прицел на транспорте by Cosmo (https://www.blast.hk/threads/72683/)
 		if isCharInAnyCar(playerPed) then
 			local car = storeCarCharIsInNoSave(playerPed)
 			local cX, cY, cZ = getCarCoordinates(car)
@@ -823,6 +701,12 @@ function main()
 			if rail then deleteObject(rail); rail = nil end
 		end
         ----------------
+        if isKeyDown(90) and not sampIsCursorActive() then
+			taskPlayAnim(PLAYER_PED, "facsurp", "PED", 9, false, false, false, true, -1)
+		else if isCharPlayingAnim(PLAYER_PED, "facsurp") then taskPlayAnim(PLAYER_PED, "facsurpm", "PED", 9, false, false, false, false, -1) end end
+		if sampIsChatInputActive() then taskPlayAnim(PLAYER_PED, "factalk", "PED", 9, false, false, false, true, -1)
+		else if isCharPlayingAnim(PLAYER_PED, "factalk") then taskPlayAnim(PLAYER_PED, "facsurpm", "PED", 9, false, false, false, false, -1) end end
+		----------------
 		if ini.main.bindkeys then
 			if isKeyJustPressed(VK_L) and not sampIsChatInputActive() and not sampIsDialogActive() and not isPauseMenuActive() and not isSampfuncsConsoleActive() then 
 				sampSendChat("/lock") 
@@ -935,10 +819,7 @@ function main()
 			end
 		end
         ---------------- Описание персонажа by Cosmo (https://www.blast.hk/threads/84975/)
-		if isKeyJustPressed(113) and not sampIsCursorActive() then
-            riverya.switch()
-        end
-		
+
 		if ini.main.blockweather == true and memory.read(0xC81320, 2, true) ~= ini.main.weather then
 			gotofunc("SetWeather") 
 		end
@@ -981,13 +862,15 @@ function main()
         end
 		
 		if ini.fixes.placename then -- Regions by Nishikinov
-			location = getGxtText(getNameOfZone(getCharCoordinates(PLAYER_PED)))
-			if location ~= plocation then
-				printStyledString("~w~"..location, 500, 2)
-				plocation = location
-			end
+			gotofunc("PlaceName")
 		end
 		
+		--fix bug photograph
+        if getCurrentCharWeapon(PLAYER_PED) == 43 and readMemory(0x70476E, 4, true) == 2866 and readMemory(0x53E227, 1, true) ~= 233 then
+            writeMemory(0x53E227, 1, 0xE9, true)
+        elseif getCurrentCharWeapon(PLAYER_PED) ~= 43 and readMemory(0x53E227, 1, true) ~= 195 and readMemory(0x70476E, 4, true) == 2866 then
+            writeMemory(0x53E227, 1, 0xC3, true)
+        end
 		----------------------------------------------------------------
 
         CDialog = sampGetDialogInfoPtr()
@@ -1160,6 +1043,68 @@ function ev.onRemove3DTextLabel(id) -- описание персонажа by Cosmo
 			table.remove(pool, i)
 		end
 	end
+end
+
+function rp_weapons()
+    if ini.main.rpguns == true then
+        local sex = true
+        if tonumber(ini.main.gender) == 0 then
+            sex = true
+        else
+            sex = false
+        end
+        local gunOn = {}
+        local gunOff = {}
+        local gunPartOn = {}
+        local gunPartOff = {}
+        local oldGun = nil
+        local nowGun = getCurrentCharWeapon(PLAYER_PED)
+        local rpTakeNames = {{"из-за спины", "за спину"}, {"из кармана", "в карман"}, {"из пояса", "на пояс"}, {"из кобуры", "в кобуру"}}
+        local rpTake = {
+            [2]=1, [5]=1, [6]=1, [7]=1, [8]=1, [9]=1, [14]=1, [15]=1, [25]=1, [26]=1, [27]=1, [28]=1, [29]=1, [30]=1, [31]=1, [32]=1, [33]=1, [34]=1, [35]=1, [36]=1, [37]=1, [38]=1, [42]=1, -- спина
+            [1]=2, [4]=2, [10]=2, [11]=2, [12]=2, [13]=2, [41]=2, [43]=2, [44]=2, [45]=2, [46]=2, -- карман
+            [3]=3, [16]=3, [17]=3, [18]=3, [39]=3, [40]=3, -- пояс
+            [22]=4, [23]=4, [24]=4 -- кобура
+        }
+        
+        for id, weapon in pairs(weapons.names) do
+            --sampAddChatMessage(id .. " - " .. weapon, -1)
+
+            if (id == 3 or (id > 15 and id < 19)) then -- 3 16 17 18 (for gunOn)
+                gunOn[id] = sex and 'снял' or 'сняла'
+            else
+                gunOn[id] = sex and 'достал' or 'достала'
+            end
+
+            if (id == 3 or (id > 15 and id < 19) or (id > 38 and id < 41)) then -- 3 16 17 18 39 40 (for gunOff)
+                gunOff[id] = sex and 'повесил' or 'повесила'
+            else
+                gunOff[id] = sex and 'убрал' or 'убрала'
+            end
+
+            if id > 0 then
+                gunPartOn[id] = rpTakeNames[rpTake[id]][1]
+                gunPartOff[id] = rpTakeNames[rpTake[id]][2]
+            end
+        end
+
+        while true do
+            wait(0)
+            if nowGun ~= getCurrentCharWeapon(PLAYER_PED) then
+                oldGun = nowGun
+                nowGun = getCurrentCharWeapon(PLAYER_PED)
+                if oldGun == 0 then
+                    sampSendChat("/me " .. gunOn[nowGun] .. " " .. weapons.get_name(nowGun) .. " " .. gunPartOn[nowGun])
+                else
+                    if nowGun == 0 then
+                        sampSendChat("/me " .. gunOff[oldGun] .. " " .. weapons.get_name(oldGun) .. " " .. gunPartOff[oldGun])
+                    else
+                        sampSendChat("/me " .. gunOff[oldGun] .. " " .. weapons.get_name(oldGun) .. " " .. gunPartOff[oldGun] .. ", после чего " .. gunOn[nowGun] .. " " .. weapons.get_name(nowGun) .. " " .. gunPartOn[nowGun])
+                    end
+                end
+            end
+        end
+    end
 end
 
 
@@ -1608,18 +1553,40 @@ local Frame = imgui.OnFrame(
                 if imgui.IsItemHovered() then
                     imgui.SetTooltip(u8"Функция скрывает все текстдравы\nПримечание: после выключения данной функции будут возвращены не все текстдравы\nБудут возвращены лишь те что рисуются заново.")
                 end
-				
-				if imgui.Button(fa.KEYBOARD..u8(ini.main.bindkeys and ' Выключить' or ' Включить')..u8" бинды", imgui.ImVec2(190, 25)) then
-					ini.main.bindkeys = not ini.main.bindkeys
-                    save()
+                if imgui.Button(fa.KEYBOARD..u8" Бинды", imgui.ImVec2(190, 25)) then
+					imgui.OpenPopup(fa.KEYBOARD..u8" Бинды") 
                 end
+                if imgui.BeginPopupModal(fa.KEYBOARD..u8" Бинды", new.bool(true), imgui.WindowFlags.NoScrollbar + imgui.WindowFlags.NoResize) then
+                	imgui.SetWindowSizeVec2(imgui.ImVec2(275, 75))
+				    if imgui.Button(fa.KEYBOARD..u8(ini.main.bindkeys and ' Выключить' or ' Включить')..u8" бинды для Arizona RP") then
+						ini.main.bindkeys = not ini.main.bindkeys
+	                    save()
+	                end
+	                if imgui.HotKey("##Открыть меню скрипта", ActOpenMenuKey, tLastKeys, 100) then
+	                    rkeys.changeHotKey(bindOpenmenu, ActOpenMenuKey.v)
+	                    sampAddChatMessage(script_name.." {FFFFFF}Старое значение: {dc4747}" .. table.concat(rkeys.getKeysName(tLastKeys.v), " + ") .. "{ffffff} | Новое: {dc4747}" .. table.concat(rkeys.getKeysName(ActOpenMenuKey.v), " + "), 0x73b461)
+	                    ini.hotkeys.openmenukey = encodeJson(ActOpenMenuKey.v)
+	                    save()
+	                end
+	                imgui.SameLine()
+	                imgui.Text(u8" Открыть меню скрипта")
+	                if ini.main.bindkeys then
+	                	imgui.SetWindowSizeVec2(imgui.ImVec2(275, 232))
+	                	imgui.Text(u8(bindkeysinfo))
+	                end
+					imgui.EndPopup()
+			    end
 
                 imgui.SameLine()
-                if imgui.Button(fa.FACE_SMILE..u8" Cистема смайлов", imgui.ImVec2(190, 25)) then
-					imgui.OpenPopup(fa.FACE_SMILE..u8" Система смайлов") 
+                if imgui.Button(fa.FACE_SMILE..u8" Role Play", imgui.ImVec2(190, 25)) then
+					imgui.OpenPopup(fa.FACE_SMILE..u8" Role Play") 
                 end
-                if imgui.BeginPopupModal(fa.FACE_SMILE..u8" Система смайлов", new.bool(true), imgui.WindowFlags.NoScrollbar + imgui.WindowFlags.NoResize) then
-                	imgui.SetWindowSizeVec2(imgui.ImVec2(375, 300))
+                if imgui.BeginPopupModal(fa.FACE_SMILE..u8" Role Play", new.bool(true), imgui.WindowFlags.NoScrollbar + imgui.WindowFlags.NoResize) then
+            	 	if ini.main.smilesys then
+						imgui.SetWindowSizeVec2(imgui.ImVec2(382, 98))
+					else
+						imgui.SetWindowSizeVec2(imgui.ImVec2(382, 74))
+					end
 				    imgui.Text(u8"Ваш пол:")
 		            imgui.SameLine()
 		            imgui.PushItemWidth(100)
@@ -1629,20 +1596,29 @@ local Frame = imgui.OnFrame(
 		            end
 		            imgui.PopItemWidth()
 		            imgui.SameLine()
-		            imgui.SameLine()
 		            if imgui.Button(fa.FACE_SMILE..u8(ini.main.smilesys and ' Выключить' or ' Включить')..u8" систему смайлов") then
 						ini.main.smilesys = not ini.main.smilesys
 	                    save()
 	                end
-		            if imgui.CollapsingHeader(u8"Доступные смайлы") then
-		                if ini.main.gender == 0 then
-		                    imgui.PushTextWrapPos(imgui.GetWindowSize().x - 40 );
-		                    imgui.Text(u8(dostupsmiletext0))
-		                elseif ini.main.gender == 1 then
-		                    imgui.PushTextWrapPos(imgui.GetWindowSize().x - 40 );
-		                    imgui.Text(u8(dostupsmiletext1))
-		                end
-		            end
+	                imgui.SetCursorPosX(170)
+	                if imgui.Button(fa.GUN..u8(ini.main.rpguns and ' Выключить' or ' Включить')..u8" отыгровку оружия") then
+						ini.main.rpguns = not ini.main.rpguns
+						rp_thread:terminate()
+						rp_thread:run()
+						save()
+	                end
+	                if ini.main.smilesys then
+			            if imgui.CollapsingHeader(u8"Доступные смайлы") then
+			            	imgui.SetWindowSizeVec2(imgui.ImVec2(382, 323))
+			                if ini.main.gender == 0 then
+			                    imgui.PushTextWrapPos(imgui.GetWindowSize().x - 40 );
+			                    imgui.Text(u8(dostupsmiletext0))
+			                elseif ini.main.gender == 1 then
+			                    imgui.PushTextWrapPos(imgui.GetWindowSize().x - 40 );
+			                    imgui.Text(u8(dostupsmiletext1))
+			                end
+			            end
+			        end
 					imgui.EndPopup()
 			    end
 
@@ -2233,6 +2209,20 @@ function gotofunc(fnc) -- by Gorskin (https://www.blast.hk/members/157398/) (про
         end
         checkboxes.fixcrosshair[0] = ini.fixes.fixcrosshair
 	end
+	if fnc == "PlaceName" or fnc == "all" then
+		location = getGxtText(getNameOfZone(getCharCoordinates(PLAYER_PED)))
+		if location ~= plocation then
+			printStyledString("~w~"..location, 500, 2)
+			plocation = location
+		end
+	end
+	if fnc == "PatchDuck" or fnc == "all" then
+        if ini.fixes.patchduck then
+            writeMemory(0x692649+1, 1, 6, true)--patch anim duck
+        else
+            writeMemory(0x692649+1, 1, 8, true)--patch anim duck
+        end
+    end
 	-----------------------Команды и прочее-----------------------
 	if fnc == "ShowNicks" then
         if ini.main.shownicks then
@@ -2512,22 +2502,16 @@ smiletextmale = {
     [':(('] = '/me очень расстроился, выглядит убитым',
     [':с'] = '/me печально опустил нижнюю губу',
     ['о_о'] = '/me выпучил глаза от удивления',
-    ['o_o'] = '/me выпучил глаза от удивления',
     ['О_О'] = '/me очень сильно шокирован',
-    ['O_O'] = '/me очень сильно шокирован',
     [':о'] = '/me слегка удивлён',
-    [':o'] = '/me слегка удивлён',
     [':О'] = '/me сильно удивился, охает',
-    [':O'] = '/me сильно удивился, охает',
     [':/'] = '/me испытывает легкое недовольство',
     ['-_-'] = '/me испытывает недовольное отвращение',
     ['=_='] = '/me испытывает недовольное отвращение',
     [':D'] = '/me добродушно смеется',
     ['xD'] = '/me угарает во весь голос, закрывая глаза со смеху',
     ['c:'] = '/me скруглил щёки, доволен как ребёнок',
-    ['с:'] = '/me скруглил щёки, доволен как ребёнок',
     ['C:'] = '/me сильно радуется с блестящими глазами',
-    ['С:'] = '/me сильно радуется с блестящими глазами',
     [':*'] = '/me посылает воздушный поцелуй',
     ['=)'] = '/me улыбается как придурок с лёгкой иронией',
     [')'] = '/me легонько улыбается',
@@ -2548,22 +2532,16 @@ smiletextfemale = {
     [':(('] = '/me очень расстроилась, выглядит убитой',
     [':с'] = '/me печально опустила нижнюю губу',
     ['о_о'] = '/me выпучила глаза от удивления',
-    ['o_o'] = '/me выпучила глаза от удивления',
     ['О_О'] = '/me очень сильно шокирована',
-    ['O_O'] = '/me очень сильно шокирована',
     [':о'] = '/me слегка удивлена',
-    [':o'] = '/me слегка удивлена',
     [':О'] = '/me сильно удивилась, охает',
-    [':O'] = '/me сильно удивилась, охает',
     [':/'] = '/me испытывает легкое недовольство',
     ['-_-'] = '/me испытывает недовольное отвращение',
     ['=_='] = '/me испытывает недовольное отвращение',
     [':D'] = '/me добродушно смеется',
     ['xD'] = '/me угарает во весь голос, закрывая глаза со смеху',
     ['c:'] = '/me скруглила щёки, довольна как ребёнок',
-    ['с:'] = '/me скруглила щёки, довольна как ребёнок',
     ['C:'] = '/me сильно радуется с блестящими глазами',
-    ['С:'] = '/me сильно радуется с блестящими глазами',
     [':*'] = '/me посылает воздушный поцелуй',
     ['=)'] = '/me улыбается как дурочка с лёгкой иронией',
     [')'] = '/me легонько улыбается',
@@ -2585,21 +2563,15 @@ dostupsmiletext0 = [[
 :(( — очень расстроился, выглядит убитым
 :с — печально опустил нижнюю губу
 о_о — выпучил глаза от удивления
-o_o — выпучил глаза от удивления
 О_О — очень сильно шокирован
-O_O — очень сильно шокирован
 :о — слегка удивлён
-:o — слегка удивлён
 :О — сильно удивился, охает
-:O сильно удивился, охает
 :/ — испытывает легкое недовольство
 -_- — испытывает недовольное отвращение
 =_= — испытывает недовольное отвращение
 :D — добродушно смеется
 xD — угарает во весь голос, закрывая глаза со смеху
-c: — скруглил щёки, доволен как ребёнок
 с: — скруглил щёки, доволен как ребёнок
-C: — сильно радуется с блестящими глазами.
 С: — сильно радуется с блестящими глазами.
 :* — посылает воздушный поцелуй
 =) — улыбается как придурок с лёгкой иронией
@@ -2611,7 +2583,6 @@ C: — сильно радуется с блестящими глазами.
 ;( — тихо плачет неторопливыми слезами
 ;(( — ревёт, захлёбывается слезами
 :-) — улыбается как глупый клоун
-
 ]]
 
 dostupsmiletext1 = [[
@@ -2620,23 +2591,16 @@ dostupsmiletext1 = [[
 :( — выглядит подавленной, грустит
 :(( — очень расстроилась, выглядит убитой
 :с — печально опустила нижнюю губу
-:c — печально опустила нижнюю губу
-о_о — выпучила глаза от удивления
 o_o — выпучила глаза от удивления
 О_О — очень сильно шокирована
-O_O — очень сильно шокирована
 :о — слегка удивлёна
-:o — слегка удивлёна
 :О — сильно удивилась, охает
-:O — сильно удивилась, охает
 :/ — испытывает легкое недовольство
 -_- — испытывает недовольное отвращение
 =_= — испытывает сильное отвращение
 :D — добродушно смеется
 xD — угарает во весь голос, закрывая глаза со смеху
 с: — скруглила щёки, довольна как ребёнок
-c: — скруглила щёки, довольна как ребёнок
-С: — сильно радуется с блестящими глазами
 C: — сильно радуется с блестящими глазами
 :* — посылает воздушный поцелуй
 =) — улыбается как дура с лёгкой иронией
@@ -2648,7 +2612,20 @@ C: — сильно радуется с блестящими глазами
 ;( — тихо плачет неторопливыми слезами
 ;(( — ревёт, захлёбывается слезами
 :-) — улыбается как глупый клоун
+]]
 
+bindkeysinfo = [[
+L - открыть/закрыть машину
+K - вставить/вытащить ключи
+X - стиль езды (Comfort | Sport)
+P - телефон
+5 - надеть/снять маску
+4 - надеть/снять бронежилет
+3 - танцевать
+Z - принять наркотики
+Alt + Num3 - покушать
+Alt + R - починить машину
+Alt + 2 - заправить машину
 ]]
 -------------------------------------------------------------
 
