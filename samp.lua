@@ -1,6 +1,7 @@
 script_name = "[SAMPFixer]"
 script_author = "riverya4life."
-script_version(0.83)
+script_version(0.84)
+script_properties('work-in-pause')
 
 --==================================== [ Information for Users or scripters ] ====================================--
 --[[ Thanks to Black Jesus for cleo GameFixer 2.0 and Gorskin for lua GameFixer 3.1 (memory addresses) 
@@ -31,7 +32,7 @@ local weapons = require 'lib.game.weapons'
 encoding.default = 'CP1251'
 u8 = encoding.UTF8
 
--- Описание персонажа by Cosmo
+-- Описание персонажа by Cosmo (https://www.blast.hk/threads/84975/)
 local active = nil
 local pool = {}
 -- Message if the description does not exist:
@@ -78,6 +79,7 @@ local ini = inicfg.load(inicfg.load({
 		bindkeys = false,
 		smilesystem = false,
 		gender = 0,
+		riveryahellomsg = true,
 		rpguns = false,
     },
     hphud = {
@@ -111,6 +113,7 @@ local ini = inicfg.load(inicfg.load({
 		dialogstyle = false,
 		windowborder = true,
 		centeredmenu = false,
+		iconstyle = 1,
 	},
     cleaner = {
         limit = 512,
@@ -142,6 +145,10 @@ local ini = inicfg.load(inicfg.load({
 }, directIni))
 inicfg.save(ini, directIni)
 
+local renderWindow, renderWindowTWS, new, str, sizeof = imgui.new.bool(), imgui.new.bool(), imgui.new, ffi.string, ffi.sizeof
+
+if not doesFileExist("moonloader/config/samp.ini") then  inicfg.save(ini, "samp.ini") end
+
 --== HotKeys ==--
 local tLastKeys = {} -- предыдущие хоткеи активации
 
@@ -167,9 +174,7 @@ local bcontrol = false
 local showtextdraw = false
 local updatesavaliable = false
 local MAX_SAMP_MARKERS = 63
-local renderWindow, renderWindowTWS, new, str, sizeof = imgui.new.bool(), imgui.new.bool(), imgui.new, ffi.string, ffi.sizeof
 
----------------------------------------------------------
 local sw, sh = getScreenResolution()
 
 local sliders = {
@@ -214,6 +219,7 @@ local checkboxes = {
 	intrun = new.bool(ini.fixes.intrun),
 	fixcrosshair = new.bool(ini.fixes.fixcrosshair),
 	patchduck = new.bool(ini.fixes.patchduck),
+	riveryahellomsg = new.bool(ini.main.riveryahellomsg),
     --------------------------------------------------
 	nop_samp_keys_F1 = new.bool(ini.nop_samp_keys.key_F1),
     nop_samp_keys_F4 = new.bool(ini.nop_samp_keys.key_F4),
@@ -237,31 +243,445 @@ local buffers = {
 	cmd_dialogstyle = new.char[64](ini.commands.dialogstyle),
 }
 
+-- Language
+--[[local languageNames = {'English', u8'Українська', u8'Русский'}
+local languageIndex = new.int(ini.main.languageIndex)
+local language = {
+	[1] = {
+		------------------------------------ [Menu] --------------------------------------------
+		tab1 = fa.HOUSE..u8' Home',
+		tab2 = fa.DESKTOP..u8' Boost FPS', 
+		tab3 = fa.GEAR..u8' Fixes', 
+		tab4 = fa.GAMEPAD..u8' Прочее', 
+		tab5 = fa.BARS..u8' Other',
+		------------------------------------ [Settings] --------------------------------------------
+		switchoff = u8'Switch off',
+		switchon = u8'Turn on',
+		switchoffchat = u8'off',
+		switchonchat = u8'enabled',
+		------------------------------------ [Themes] --------------------------------------------
+		theme1 = u8'Blue',
+		theme2 = u8'Red',
+		theme3 = u8'Brown',
+		theme4 = u8'Aqua',
+		theme5 = u8'Black',
+		theme6 = u8'Violet',
+		theme7 = u8'Dark-orange',
+		theme8 = u8'Grey',
+		theme9 = u8'Cherrish',
+		theme10 = u8'Green',
+		theme11 = u8'Purple',
+		theme12 = u8'Dark-green',
+		theme13 = u8'Orange',
+		------------------------------------ [Menu Home] --------------------------------------------
+		slidersetweather = u8'Weather',
+		slidersetweatherquestext = u8'Changes the game weather to its own.',
+		slidersettime = u8'Time',
+		slidersettimequestext = u8'Changes the game time to your own.',
+		checkboxblockweather = u8' Block weather change by the server',
+		checkboxblocktime = u8' Block the server from changing the time',
+		comboanimationmoney = fa.CIRCLE_DOLLAR_TO_SLOT..u8' Animation of adding / decreasing money:',
+		slideralphamap = fa.CLOUD_SUN_RAIN..u8' Transparency of the map on the radar:',
+		slideralphamapquestext = u8'Changes the transparency of the map on the radar. The map itself in the ESC menu will be normal (value from 0 to 255).',
+		buttonvsync = u8'vertical sync',
+		buttonvsynctextchat = u8'Vertical Sync',
+		------------------------------------ [Boost FPS] --------------------------------------------
+		checkboxpostfx = u8' Disable post-processing',
+		checkboxpostfxquestext = u8' Disables post-processing if you have a weak PC.',
+		checkboxdisableeffects = u8' Disable effects',
+		checkboxdisableeffectsquestext = u8' Disables effects in the game if you have a weak PC.',
+		collapsingheaderdrawdist = fa.EYE..u8' Render distance',
+		checkboxgivemedist = u8' Enable the ability to change the rendering',
+		sliderdrawdist = fa.EYE..u8' Main draw distance:',
+		sliderdrawdistquestext = u8'Changes the main draw distance.',
+		sliderdrawdistair = fa.PLANE_UP..u8' Draw distance in air transport:',
+		sliderdrawdistairquestext = u8'Changes the draw distance in air transport.',
+		sliderdrawdistpara = fa.PARACHUTE_BOX..u8' Draw distance when using a parachute:',
+		sliderdrawdistparaquestext = u8'Changes the draw distance when using a parachute.',
+		sliderfog = fa.SMOG..u8' Fog rendering distance:',
+		sliderfogquestext = u8'Changes the fog rendering distance',
+		sliderlod = fa.MOUNTAIN..u8' Lod draw distance:',
+		sliderlodquestext = u8'Changes the draw distance of lods.',
+		collapsingheadercleanmemory = fa.EYE..u8' Clearing memory',
+		checkboxautoclean = u8' Enable auto clear memory',
+		checkboxclearinfo = u8' Show memory clear message',
+		sliderlimitmemory = u8'Auto clear limit: %d MB',
+		buttonclearmemory = u8'Clear memory',
+		------------------------------------ [Fixes] --------------------------------------------
+		checkboxfixbloodwood = u8' Fixing blood when wood is damaged',
+		checkboxfixbloodwoodquestext = u8'Correction of blood when a tree is damaged.',
+		checkboxnolimitmoneyhud = u8' Remove the limit on limiting money in the HUD',
+		checkboxnolimitmoneyhudquestext = u8'Removes the limit on the amount of money in the HUD if you have more than $999.999.999',
+		checkboxsunfix = u8' Bring back the sun',
+		checkboxsunfixquestext = u8'Brings back the sun from single player.',
+		checkboxgrassfix = u8' Bring back the grass',
+		checkboxgrassfixquestext = u8'Returns the grass from the single player game (effects in the settings should be medium +). After shutting down, you must restart the game to remove the grass completely!',
+		checkboxmoneyfontfix = u8' Removing Zeros in HUD',
+		checkboxmoneyfontfixquestext = u8'Removes zeros in HUD, instead of 000.000.350$ there will be 350$',
+		checkboxstarsondisplay = u8' Stars on the screen',
+		checkboxstarsondisplayquestext = u8'After enabling this feature, you must restart the game for the stars to appear on the screen.',
+		checkboxsensfix = u8' Mouse sensitivity fix',
+		checkboxsensfixquestext = u8'Corrects the sensitivity of the mouse along the X and Y axes.',
+		checkboxfixblackroads = u8' Fix black roads',
+		checkboxfixblackroadsquestext = u8'Fixes the display of black roads at low game settings.',
+		checkboxlongarmfix = u8' Fix long arms',
+		checkboxlongarmfixquestext = u8'Corrects stretching of the arms on two-wheeled vehicles.',
+		------------------------------------ [Other] --------------------------------------------
+		buttonclearchat = fa.ERASER..u8' Clear chat',
+		buttonclearchatitemhovered = u8'To quickly clear a chat\nenter the following command into the chat: ',
+		buttonssmode = fa.CAMERA..u8' SS Mode: ',
+		buttonssmodeitemhovered = u8'The function turns on the green screen\nConvenient when you take a screenshot of the situation',
+		buttonantiafk = fa.KEYBOARD..u8' AntiAFK: ',
+		buttonantiafkitemhovered = fa.EXCLAMATION..u8' The function turns on Anti-AFK\nif you don't need the game not to pause after\ncursing\n(Dangerous, because you can get banned!)',
+		buttongivebeer1 = fa.FIRE..u8' Get a bottle of beer',
+		buttongivebeer2 = fa.FIRE..u8' Get a bottle of beer 2',
+		buttongivesprunk = fa.FIRE..u8' Get Sprunk',
+		buttongivecigarette = fa.FIRE..u8' Get a cigarette',
+		buttonpiss = fa.WATER..u8' Piss',
+		buttonhidetextdraws = fa.EYE_SLASH..u8' Hide textdraws: ',
+		buttonhidetextdrawsitemhovered = u8'This function hides all textdraws\nNote: when this function is turned off, not all textdraws will be returned\nOnly those that are redrawn will be returned.'
+		------------------------------------ [Settings] --------------------------------------------
+		combochangetheme = fa.HOUSE..u8' Changing Theme:',
+		sliderroundthemequestext = u8'Changes the window's rounding value (default value is 4.0).',
+		sliderroundcompquestext = u8'Changes the rounding value of other window components such as buttons and so on (default value is 2.0).',
+		sliderroundmenuquestext = u8'Changes the rounding value of menu selections and childs (default value is 4.0).',
+		checkboxdialogstyle = u8' New dialog color',
+		checkboxdialogstylequestext = u8' Changes the color of dialog boxes similar to those on the Arizona RP launcher.',
+		buttonreloadscript = u8'Reload script ',
+		buttonturnoffscript = u8'Turn off script ',
+		
+	}
+}]]
+
+-- Language
+local lang_int = new.int(ini.main.language-1)
+local lang_list = {u8'English', u8'Українська', u8'Русский'}
+local lang_items = new['const char*'][#lang_list](lang_list)
+
+local languagebuffer = {
+	[1] = {
+		------------------------------------ [Menu] --------------------------------------------
+		textTab1 = u8' Home',
+		textTab2 = u8' Boost FPS', 
+		textTab3 = u8' Fixes', 
+		textTab4 = u8' Прочее', 
+		textTab5 = u8' Other',
+		------------------------------------ [Settings] --------------------------------------------
+		textSwitchOff = u8'Switch off',
+		textSwitchOn = u8'Turn on',
+		textSwitchOffChat = u8'off',
+		textSwitchOnChat = u8'enabled',
+		------------------------------------ [Themes] --------------------------------------------
+		textTheme1 = u8'Blue',
+		textTheme2 = u8'Red',
+		textTheme3 = u8'Brown',
+		textTheme4 = u8'Aqua',
+		textTheme5 = u8'Black',
+		textTheme6 = u8'Violet',
+		textTheme7 = u8'Dark-orange',
+		textTheme8 = u8'Grey',
+		textTheme9 = u8'Cherrish',
+		textTheme10 = u8'Green',
+		textTheme11 = u8'Purple',
+		textTheme12 = u8'Dark-green',
+		textTheme13 = u8'Orange',
+		------------------------------------ [Menu Home] --------------------------------------------
+		textSliderSetWeather = u8'Weather',
+		textSliderSetSeatherHintText = u8'Changes the game weather to its own.',
+		textSliderSetTime = u8'Time',
+		textSliderSetTimeHintText = u8'Changes the game time to your own.',
+		textCheckboxBlockWeather = u8' Block weather change by the server',
+		textCheckboxBlockTime = u8' Block the server from changing the time',
+		textComboAnimationMoney = u8' Animation of adding / decreasing money:',
+		textSliderAlphaMap = u8' Transparency of the map on the radar:',
+		textSliderAlphaMapHintText = u8'Changes the transparency of the map on the radar. The map itself in the ESC menu will be normal (value from 0 to 255).',
+		textButtonVsync = u8'vertical sync',
+		textVuttonVsyncTextChat = u8'Vertical Sync',
+		------------------------------------ [Boost FPS] --------------------------------------------
+		textCheckboxPostFX = u8' Disable post-processing',
+		textCheckboxPostFXHintText = u8' Disables post-processing if you have a weak PC.',
+		textCheckboxDisableEffects = u8' Disable effects',
+		textCheckboxDisableEffectsHintText = u8' Disables effects in the game if you have a weak PC.',
+		textCollapsingHeaderDrawdist = u8' Render distance',
+		textCheckboxGivemedist = u8' Enable the ability to change the rendering',
+		textSliderDrawdist = u8' Main draw distance:',
+		textSliderDrawdistHintText = u8'Changes the main draw distance.',
+		textSliderDrawdistAir = u8' Draw distance in air transport:',
+		textSliderDrawdistAirHintText = u8'Changes the draw distance in air transport.',
+		textSliderDrawdistPara = u8' Draw distance when using a parachute:',
+		textSliderDrawdistParaHintText = u8'Changes the draw distance when using a parachute.',
+		textSliderFog = u8' Fog rendering distance:',
+		textSliderFogHintText = u8'Changes the fog rendering distance',
+		textSliderLod = u8' Lod draw distance:',
+		textSliderLodHintText = u8'Changes the draw distance of lods.',
+		textCollapsingHeaderCleanMemory = u8' Clearing memory',
+		textCheckboxAutoClean = u8' Enable auto clear memory',
+		textCheckboxClearInfo = u8' Show memory clear message',
+		textSliderLimitMemory = u8'Auto clear limit: %d MB',
+		textButtonClearMemory = u8'Clear memory',
+		------------------------------------ [Fixes] --------------------------------------------
+		textCheckboxFixBloodWood = u8' Fixing blood when wood is damaged',
+		textCheckboxFixBloodWoodHintText = u8'Correction of blood when a tree is damaged.',
+		textCheckboxNoLimitMoneyHud = u8' Remove the limit on limiting money in the HUD',
+		textCheckboxNoLimitMoneyHudHintText = u8'Removes the limit on the amount of money in the HUD if you have more than $999.999.999',
+		textCheckboxsunfix = u8' Bring back the sun',
+		textCheckboxsunfixquestext = u8'Brings back the sun from single player.',
+		textCheckboxgrassfix = u8' Bring back the grass',
+		textCheckboxgrassfixquestext = u8'Returns the grass from the single player game (effects in the settings should be medium +). After shutting down, you must restart the game to remove the grass completely!',
+		textCheckboxmoneyfontfix = u8' Removing Zeros in HUD',
+		textCheckboxmoneyfontfixquestext = u8'Removes zeros in HUD, instead of 000.000.350$ there will be 350$',
+		textCheckboxstarsondisplay = u8' Stars on the screen',
+		textCheckboxstarsondisplayquestext = u8'After enabling this feature, you must restart the game for the stars to appear on the screen.',
+		textCheckboxsensfix = u8' Mouse sensitivity fix',
+		textCheckboxsensfixquestext = u8'Corrects the sensitivity of the mouse along the X and Y axes.',
+		textCheckboxfixblackroads = u8' Fix black roads',
+		textCheckboxfixblackroadsquestext = u8'Fixes the display of black roads at low game settings.',
+		textCheckboxlongarmfix = u8' Fix long arms',
+		textCheckboxlongarmfixquestext = u8'Corrects stretching of the arms on two-wheeled vehicles.',
+		------------------------------------ [Other] --------------------------------------------
+		textButtonClearChat = fa.ERASER..u8' Clear chat',
+		textButtonClearChatItemHovered = u8'To quickly clear a chat\nenter the following command into the chat: ',
+		textButtonSSmode = fa.CAMERA..u8' SS Mode: ',
+		buttonssmodeitemhovered = u8'The function turns on the green screen\nConvenient when you take a screenshot of the situation',
+		buttonantiafk = fa.KEYBOARD..u8' AntiAFK: ',
+		buttonantiafkitemhovered = fa.EXCLAMATION..u8' The function turns on Anti-AFK\nif you dont need the game not to pause after\ncursing\n(Dangerous, because you can get banned!)',
+		buttongivebeer1 = fa.FIRE..u8' Get a bottle of beer',
+		buttongivebeer2 = fa.FIRE..u8' Get a bottle of beer 2',
+		buttongivesprunk = fa.FIRE..u8' Get Sprunk',
+		buttongivecigarette = fa.FIRE..u8' Get a cigarette',
+		buttonpiss = fa.WATER..u8' Piss',
+		buttonhidetextdraws = fa.EYE_SLASH..u8' Hide textdraws: ',
+		buttonhidetextdrawsitemhovered = u8'This function hides all textdraws\nNote: when this function is turned off, not all textdraws will be returned\nOnly those that are redrawn will be returned.',
+		------------------------------------ [Settings] --------------------------------------------
+		combochangetheme = fa.HOUSE..u8' Changing Theme:',
+		sliderroundthemequestext = u8'Changes the windows rounding value (default value is 4.0).',
+		sliderroundcompquestext = u8'Changes the rounding value of other window components such as buttons and so on (default value is 2.0).',
+		sliderroundmenuquestext = u8'Changes the rounding value of menu selections and childs (default value is 4.0).',
+		textCheckboxdialogstyle = u8' New dialog color',
+		textCheckboxdialogstylequestext = u8' Changes the color of dialog boxes similar to those on the Arizona RP launcher.',
+		buttonreloadscript = u8'Reload script ',
+		buttonturnoffscript = u8'Turn off script ',
+		textChooseLanguage = u8'Choose language',
+	},
+	[2] = {
+		------------------------------------ [Menu] --------------------------------------------
+		tab1 = fa.HOUSE..u8' Головна',
+		tab2 = fa.DESKTOP..u8' Покращ. FPS', 
+		tab3 = fa.GEAR..u8' Виправлення', 
+		tab4 = fa.GAMEPAD..u8' Інше', 
+		tab5 = fa.BARS..u8' Налаштування',
+		------------------------------------ [Settings] --------------------------------------------
+		switchoff = u8'Вимкнути',
+		switchon = u8'Увімкнути',
+		switchoffchat = u8'вимк.',
+		switchonchat = u8'увімк.',
+		------------------------------------ [Themes] --------------------------------------------
+		theme1 = u8'Блакитна',
+		theme2 = u8'Червона',
+		theme3 = u8'Коричнева',
+		theme4 = u8'Аквамаринова',
+		theme5 = u8'Темна',
+		theme6 = u8'Фіолетова',
+		theme7 = u8'Темно-помаранчева',
+		theme8 = u8'Сіра',
+		theme9 = u8'Вишнева',
+		theme10 = u8'Зелена',
+		theme11 = u8'Пурпурна',
+		theme12 = u8'Темно-зелена',
+		theme13 = u8'Помаранчева',
+		------------------------------------ [Menu Home] --------------------------------------------
+		slidersetweather = u8'Погода',
+		slidersetweatherquestext = u8'Змінює погоду на власну.',
+		slidersettime = u8'Час',
+		slidersettimequestext = u8'Змінює час на власний.',
+		checkboxblockweather = u8'Забороняє серверу змінювати погоду.',
+		checkboxblocktime = u8'Забороняє серверу змінювати час.',
+		comboanimationmoney = fa.CIRCLE_DOLLAR_TO_SLOT..u8' Анімація зміни кількості грошей:',
+		slideralphamap = fa.CLOUD_SUN_RAIN..u8' Прозорість мапи на радарі:',
+		slideralphamapquestext = u8'Змінює прозорість мапи на радарі. Мапа в меню буде мати нормальний вигляд (значення 0-255).',
+		buttonvsync = u8'вертикальна синхр',
+		buttonvsynctextchat = u8'Вертикальна сихнронізація.',
+		------------------------------------ [Boost FPS] --------------------------------------------
+		checkboxpostfx = u8'Вимкнути пост-процессінг',
+		checkboxpostfxquestext = u8' Вимкнути пост-процессінг (якщо у вас слабкий ПК)',
+		checkboxdisableeffects = u8' Вмкнути еффекти',
+		checkboxdisableeffectsquestext = u8'Вимкнути еффекти (якщо у вас слабкий ПК).',
+		collapsingheaderdrawdist = fa.EYE..u8' Дальність прорисовки',
+		checkboxgivemedist = u8' Вмикає можливіть змінювати прорисовку.',
+		sliderdrawdist = fa.EYE..u8' Дистанція основного draw:',
+		sliderdrawdistquestext = u8'Змінює дистанцію основного draw.',
+		sliderdrawdistair = fa.PLANE_UP..u8' Дальність прорисовки в пов. транспорті:',
+		sliderdrawdistairquestext = u8'Змінює дальність прорисовки в повітрянному транспорті.',
+		sliderdrawdistpara = fa.PARACHUTE_BOX..u8' Дальність прорисовки з парашутом:',
+		sliderdrawdistparaquestext = u8'Змінює дальність прорисовки, поки використовуєте парашут.',
+		sliderfog = fa.SMOG..u8' Дальність прорисовки туману:',
+		sliderfogquestext = u8'Змінює дистанцію прорисовки туману.',
+		sliderlod = fa.MOUNTAIN..u8' Дальність прорисовки лодів:',
+		sliderlodquestext = u8'Змінює дистанцію прорисовки лодів.',
+		collapsingheadercleanmemory = fa.EYE..u8' Очистка памяті.',
+		checkboxautoclean = u8' Увімкнути автоочищення памяті',
+		checkboxclearinfo = u8' Показувати повідомлення про очищення памяті.',
+		sliderlimitmemory = u8'Ліміт автоочищення: %d MB',
+		buttonclearmemory = u8'Очистити память.',
+		------------------------------------ [Fixes] --------------------------------------------
+		checkboxfixbloodwood = u8' Прибрати кров від дерева',
+		checkboxfixbloodwoodquestext = u8'Прибирає кров після "поранення дерева".',
+		checkboxnolimitmoneyhud = u8' Прибрати ліміт грошей в HUD',
+		checkboxnolimitmoneyhudquestext = u8'Прибирає ліміт грошей, які відображаються на худі (ліміт до: $999.999.999)',
+		checkboxsunfix = u8' Повернути сонце.',
+		checkboxsunfixquestext = u8'Повертає сонце з сінглплеєру.',
+		checkboxgrassfix = u8' Повернути траву.',
+		checkboxgrassfixquestext = u8'Повертає траву з сінглплеєру (еффекти повинні бути мінімум середні). Після вимкнення, перезапустіть гру щоб остаточно вимкнути траву.',
+		checkboxmoneyfontfix = u8' Прибрати нулі з HUD',
+		checkboxmoneyfontfixquestext = u8'Прибирає нулі з HUD, було 000.000.350$, натомість буде 350$',
+		checkboxstarsondisplay = u8' Зірки на екрані.',
+		checkboxstarsondisplayquestext = u8'Після увімкнення цієї функції, перезапустіть гру, щоб зірки з`явились..',
+		checkboxsensfix = u8' Виправлення чутливості миші.',
+		checkboxsensfixquestext = u8'Коректує чутливість миші по Х та Y вісям.',
+		checkboxfixblackroads = u8' Виправлення чорних доріг',
+		checkboxfixblackroadsquestext = u8'Виправляє відображення чорних доріг на мініальних налаштуваннях.',
+		checkboxlongarmfix = u8' Виправлення довгих рук',
+		checkboxlongarmfixquestext = u8'Коректує жах з руками на двоколісному транспорті.',
+		------------------------------------ [Other] --------------------------------------------
+		buttonclearchat = fa.ERASER..u8' Очистити чат',
+		buttonclearchatitemhovered = u8'Щоб швидко очистити чат\nвведіть слідуючу команду в чат: ',
+		buttonssmode = fa.CAMERA..u8' СС режим: ',
+		buttonssmodeitemhovered = u8'Функція вмикає зелений екран\nЗручно для скріншот-ситуацій.',
+		buttonantiafk = fa.KEYBOARD..u8' Анти-AFK: ',
+		buttonantiafkitemhovered = fa.EXCLAMATION..u8' Функція вмикає анти-AFK\nякщо ви хочете, щоб гра не вимикалась, коли звернута\n(Можете бути покараними!)',
+		buttongivebeer1 = fa.FIRE..u8' Отримати пляшку пивасику.',
+		buttongivebeer2 = fa.FIRE..u8' Отримати пляшку пивасику 2.',
+		buttongivesprunk = fa.FIRE..u8' Отримати спранку.',
+		buttongivecigarette = fa.FIRE..u8' Отримати цигарку.',
+		buttonpiss = fa.WATER..u8' Попісяти.',
+		buttonhidetextdraws = fa.EYE_SLASH..u8' Заховати текстдрави: ',
+		buttonhidetextdrawsitemhovered = u8'Ця функція приховує всі текстдрави\nПримітка: коли функція вимкнена, не всі текстдрави повернуться.\nПовернуться тільки ті, що перемалюються.',
+		------------------------------------ [Settings] --------------------------------------------
+		combochangetheme = fa.HOUSE..u8' Зміна теми:',
+		sliderroundthemequestext = u8'Зміна заокруглення вікна (за замовчуванням 4.0).',
+		sliderroundcompquestext = u8'Зміна заокруглення елементів вікна (за замовчуванням 2.0).',
+		sliderroundmenuquestext = u8'Зміна заокруглення чайлдів та меню вибору (за замовчуванням 4.0).',
+		checkboxdialogstyle = u8' Новий колір діалогу',
+		checkboxdialogstylequestext = u8' Змінює колір діалогів, колір яких схожий на діалоги лаунчера Arizona RP.',
+		buttonreloadscript = u8'Перезапуск скрипту ',
+		buttonturnoffscript = u8'Вимкнути скрипт ',
+		textChooseLanguage = u8'Оберіть мову',
+	},
+	[3] = {
+		textChooseLanguage = u8'Выберите язык',
+	}
+}
+
+function translate(str)
+	return languagebuffer[ini.main.language][str]
+end
+
+local created = false
+chatcommands = {'c', 's', 'b', 'w', 'r', 'm', 'd', 'f', 'rb', 'fb', 'rt', 'pt', 'ft', 'cs', 'ct', 'fam', 'vr', 'al', 'me', 'do', 'todo', 'seeme', 'fc', 'u', 'jb', 'j', 'jf', 'a', 'o'}
+bi = false
+antiafk = false
+
+local speed = new.int(55)
+local rb_line_size = new.int(-50)
+
+local int_item = new.int(ini.themesetting.theme-1)
+local item_list = {
+	u8"Синяя", 
+	u8"Красная", 
+	u8"Коричневая", 
+	u8"Аква", 
+	u8"Черная", 
+	u8"Фиолетовая", 
+	u8"Черно-оранжевая", 
+	u8"Серая", 
+	u8"Вишневая", 
+	u8"Зеленая", 
+	u8"Пурпурная", 
+	u8"Темно-зеленая", 
+	u8"Оранжевая"}
+local ImItems = new['const char*'][#item_list](item_list)
+
+local tab = new.int(1)
+local tabs = {
+	fa.HOUSE..u8'\tГлавная', 
+	fa.DESKTOP..u8'\tBoost FPS', 
+	fa.GEAR..u8'\tИсправления', 
+	fa.LEAF..u8'\tПрочее', 
+	fa.BARS..u8'\tНастройки',
+}
+
+local ivar = new.int(ini.main.animmoney-1)
+local tbmtext = {
+    u8"Быстрая",
+    u8"Без анимации",
+    u8"Стандартная",
+}
+local tmtext = new['const char*'][#tbmtext](tbmtext)
+
+local textscount = 0
+local texts = {
+	"Ты нахуя на меня нажал?", 
+	"По ебалу давно не получал?", 
+	"Ща тебя как пиздану нахуй!", 
+	"Мразь блять, переставай!!!",
+	"Сука ну все, еще один раз и я тебя по ебалу буду бить!", 
+	"*Бьёт тебя по ебалу*",
+}
+
+local gender = new.int(ini.main.gender)
+local arr_gender = {
+	u8"Мужской", 
+	u8"Женский",
+}
+local genders = new['const char*'][#arr_gender](arr_gender)
+
+bike = {[481] = true, [509] = true, [510] = true}
+moto = {[448] = true, [461] = true, [462] = true, [463] = true, [468] = true, [471] = true, [521] = true, [522] = true, [523] = true, [581] = true, [586] = true}
+
+local ICON_STYLE = { "solid", "thin", "regular", "light" }
+local ICON_STYLE_NAMES = { 'Solid', 'Thin', 'Regular', 'Light' }
+local iconstyle = new.int(ini.themesetting.iconstyle)
+
+local ICON_STYLES = { ["Solid"] = "solid", ["Thin"] = "thin", ["Regular"] = "regular", ["Light"] = "light" }
+
+local fps = '-'
+
+------------------------------------ [Клинер ёбаный блять] --------------------------------------------
+local function round(num, idp)
+    local mult = 10 ^ (idp or 0)
+    return math.floor(num * mult + 0.5) / mult
+end
+
+function get_memory()
+    return round(memory.read(0x8E4CB4, 4, true) / 1048576, 1)
+end
+-------------------------------------------------------------------------------------------------
+
 local imguiCheckboxesFixesAndPatches = {
-    [u8" Исправление крови при повреждении дерева"] = {var = checkboxes.fixbloodwood, cfg = "fixbloodwood", fnc = "FixBloodWood"},
-    [u8" Cнять лимит на ограничение денег в худе"] = {var = checkboxes.nolimitmoneyhud, cfg = "nolimitmoneyhud", fnc = "NoLimitMoneyHud"},
-    [u8" Вернуть солнце"] = {var = checkboxes.sunfix, cfg = "sunfix", fnc = "SunFix"},
-    [u8" Вернуть траву"] = {var = checkboxes.grassfix, cfg = "grassfix", fnc = "GrassFix"},
-    [u8" Вернуть названия районов"] = {var = checkboxes.placename, cfg = "placename", fnc = "PlaceName"},
-    [u8" Удаление нулей в худе"] = {var = checkboxes.moneyfontfix, cfg = "moneyfontfix", fnc = "MoneyFontFix"},
-    [u8" Звёзды на экране"] = {var = checkboxes.starsondisplay, cfg = "starsondisplay", fnc = "StarsOnDisplay"},
-    [u8" Фикс чувствительности мышки"] = {var = checkboxes.sensfix, cfg = "sensfix", fnc = "FixSensitivity"},
-    [u8" Анимации при бездействии"] = {var = checkboxes.animidle, cfg = "animidle", fnc = "_"},
-    [u8" Фикс чёрных дорог"] = {var = checkboxes.fixblackroads, cfg = "fixblackroads", fnc = "FixBlackRoads"},
-    [u8" Фикс длинных рук"] = {var = checkboxes.longarmfix, cfg = "longarmfix", fnc = "FixLongArm"},
-	[u8" Исправление бега в интерьерах"] = {var = checkboxes.intrun, cfg = "intrun", fnc = "InteriorRun"},
-	[u8" Исправление белой точки на прицеле"] = {var = checkboxes.fixcrosshair, cfg = "fixcrosshair", fnc = "FixCrosshair"},
-	[u8" Патч анимации приседа с оружием"] = {var = checkboxes.patchduck, cfg = "patchduck", fnc = "PatchDuck"},
+    [u8"Исправление крови при повреждении дерева"] = {var = checkboxes.fixbloodwood, cfg = "fixbloodwood", fnc = "FixBloodWood"},
+    [u8"Cнять лимит на ограничение денег в худе"] = {var = checkboxes.nolimitmoneyhud, cfg = "nolimitmoneyhud", fnc = "NoLimitMoneyHud"},
+    [u8"Вернуть солнце"] = {var = checkboxes.sunfix, cfg = "sunfix", fnc = "SunFix"},
+    [u8"Вернуть траву"] = {var = checkboxes.grassfix, cfg = "grassfix", fnc = "GrassFix"},
+    [u8"Вернуть названия районов"] = {var = checkboxes.placename, cfg = "placename", fnc = "PlaceName"},
+    [u8"Удаление нулей в худе"] = {var = checkboxes.moneyfontfix, cfg = "moneyfontfix", fnc = "MoneyFontFix"},
+    [u8"Звёзды на экране"] = {var = checkboxes.starsondisplay, cfg = "starsondisplay", fnc = "StarsOnDisplay"},
+    [u8"Фикс чувствительности мышки"] = {var = checkboxes.sensfix, cfg = "sensfix", fnc = "FixSensitivity"},
+    [u8"Анимации при бездействии"] = {var = checkboxes.animidle, cfg = "animidle", fnc = "_"},
+    [u8"Фикс чёрных дорог"] = {var = checkboxes.fixblackroads, cfg = "fixblackroads", fnc = "FixBlackRoads"},
+    [u8"Фикс длинных рук"] = {var = checkboxes.longarmfix, cfg = "longarmfix", fnc = "FixLongArm"},
+	[u8"Исправление бега в интерьерах"] = {var = checkboxes.intrun, cfg = "intrun", fnc = "InteriorRun"},
+	[u8"Исправление белой точки на прицеле"] = {var = checkboxes.fixcrosshair, cfg = "fixcrosshair", fnc = "FixCrosshair"},
+	[u8"Патч анимации приседа с оружием"] = {var = checkboxes.patchduck, cfg = "patchduck", fnc = "PatchDuck"},
 }
 
 local imguiInputsCmdEditor = {
-    [u8" Открыть меню скрипта"] = {var = buffers.cmd_openmenu, cfg = "openmenu"},
-    [u8" Показать ники"] = {var = buffers.cmd_shownicks, cfg = "shownicks"},
-    [u8" Показать ХП игроков"] = {var = buffers.cmd_showhp, cfg = "showhp"},
-    [u8" Очистить чат"] = {var = buffers.cmd_clearchat, cfg = "clearchat"},
-    [u8" Показать/скрыть чат"] = {var = buffers.cmd_showchat, cfg = "showchat"},
-    [u8" Показать/скрыть HUD"] = {var = buffers.cmd_showhud, cfg = "showhud"},
-    [u8" Новый цвет диалоговых окон"] = {var = buffers.cmd_dialogstyle, cfg = "dialogstyle"},
+    [u8"Открыть меню скрипта"] = {var = buffers.cmd_openmenu, cfg = "openmenu"},
+    [u8"Показать ники"] = {var = buffers.cmd_shownicks, cfg = "shownicks"},
+    [u8"Показать ХП игроков"] = {var = buffers.cmd_showhp, cfg = "showhp"},
+    [u8"Очистить чат"] = {var = buffers.cmd_clearchat, cfg = "clearchat"},
+    [u8"Показать/скрыть чат"] = {var = buffers.cmd_showchat, cfg = "showchat"},
+    [u8"Показать/скрыть HUD"] = {var = buffers.cmd_showhud, cfg = "showhud"},
+    [u8"Новый цвет диалоговых окон"] = {var = buffers.cmd_dialogstyle, cfg = "dialogstyle"},
 }
 
 local listUpdate = {
@@ -312,64 +732,6 @@ local listUpdate = {
     },
 }
 
-local created = false
-chatcommands = {'c', 's', 'b', 'w', 'r', 'm', 'd', 'f', 'rb', 'fb', 'rt', 'pt', 'ft', 'cs', 'ct', 'fam', 'vr', 'al', 'me', 'do', 'todo', 'seeme', 'fc', 'u', 'jb', 'j', 'jf', 'a', 'o'}
-bi = false
-antiafk = false
-
-local int_item = new.int(ini.themesetting.theme-1)
-local item_list = {u8"Синяя", u8"Красная", u8"Коричневая", u8"Аква", u8"Черная", u8"Фиолетовая", u8"Черно-оранжевая", u8"Серая", u8"Вишневая", u8"Зеленая", u8"Пурпурная", u8"Темно-зеленая", u8"Оранжевая"}
-local ImItems = new['const char*'][#item_list](item_list)
-
-local tab = new.int(1)
-local tabs = {fa.HOUSE..u8'\tГлавная', fa.DESKTOP..u8'\tBoost FPS', fa.GEAR..u8'\tИсправления', fa.LEAF..u8'\tПрочее', fa.BARS..u8'\tНастройки',
-}
-
-local ivar = new.int(ini.main.animmoney-1)
-local tbmtext = {
-    u8"Быстрая",
-    u8"Без анимации",
-    u8"Стандартная",
-}
-local tmtext = new['const char*'][#tbmtext](tbmtext)
-
-local textscount = 0
-local texts = {
-	"Ты нахуя на меня нажал?", 
-	"По ебалу давно не получал?", 
-	"Ща тебя как пиздану нахуй!", 
-	"Мразь блять, переставай!!!",
-	"Сука ну все, еще один раз и я тебя по ебалу буду бить!", 
-	"*Бьёт тебя по ебалу*",
-}
-
-local gender = new.int(ini.main.gender)
-local arr_gender = {
-	u8"Мужской", 
-	u8"Женский",
-}
-local genders = new['const char*'][#arr_gender](arr_gender)
-
------------------------------------- [Клинер ёбаный блять] --------------------------------------------
-local function round(num, idp)
-    local mult = 10 ^ (idp or 0)
-    return math.floor(num * mult + 0.5) / mult
-end
-
-function get_memory()
-    return round(memory.read(0x8E4CB4, 4, true) / 1048576, 1)
-end
--------------------------------------------------------------------------------------------------
-
-function setDialogColor(l_up, r_up, l_low, r_bottom) --by stereoliza (https://www.blast.hk/threads/13380/post-621933)
-    local CDialog = memory.getuint32(getModuleHandle("samp.dll") + 0x21A0B8)
-    local CDXUTDialog = memory.getuint32(CDialog + 0x1C)
-    memory.setuint32(CDXUTDialog + 0x12A, l_up, true) -- Левый угол
-    memory.setuint32(CDXUTDialog + 0x12E, r_up, true) -- Правый верхний угол
-    memory.setuint32(CDXUTDialog + 0x132, l_low, true) -- Нижний левый угол
-    memory.setuint32(CDXUTDialog + 0x136, r_bottom, true) -- Правый нижний угол
-end
-
 function get_samp_version()
     if samp_base == nil or samp_base == 0 then
         samp_base = getModuleHandle("samp.dll")
@@ -394,6 +756,30 @@ function get_samp_version()
 
     return "unknown"
 end
+
+function setDialogColor(l_up, r_up, l_low, r_bottom) --by stereoliza (Heroku) (https://www.blast.hk/threads/13380/post-621933)
+	memhuy = { ["r1"] = 0x21A0B8, ["r2"] = 0x21A0B8, ["r3"] = 0x26E898, ["r4"] = 0x26E9C8, ["dl"] = 0x2AC9E0 }
+	
+	for k,v in pairs(memhuy) do
+		if get_samp_version() == k then
+			memhuy = v
+		end
+	end
+	
+	local CDialog = memory.getuint32(getModuleHandle("samp.dll") + memhuy)
+	local CDXUTDialog = memory.getuint32(CDialog + 0x1C)
+	memory.setuint32(CDXUTDialog + 0x12A, l_up, true) -- Левый угол
+	memory.setuint32(CDXUTDialog + 0x12E, r_up, true) -- Правый верхний угол
+	memory.setuint32(CDXUTDialog + 0x132, l_low, true) -- Нижний левый угол
+	memory.setuint32(CDXUTDialog + 0x136, r_bottom, true) -- Правый нижний угол
+end
+
+function rainbowlines(size, size_X, size_Y, offset)
+	local r1, g1, b1, a1 = rainbow(0, 255, 100 + offset)
+	local r2, g2, b2, a2 = rainbow(0, 255, 0 + offset)
+	gr_line_with_up_padding(30, size_X, size, join_argb(a1, r1, g1, b1), join_argb(a2, r2, g2, b2))
+end
+
 ------------------------------------------ [анимация бездействия by vegas~ (https://www.blast.hk/threads/151523/)]
 local player = {
     mainTime = 0,
@@ -449,6 +835,7 @@ player.thePlayer = function()
     end
 
 end
+
 ------------------------------------------ [анимация бездействия by vegas~ (https://www.blast.hk/threads/151523/)]
 local ui_meta = {
     __index = function(self, v)
@@ -554,20 +941,21 @@ function update() -- by chapo (https://www.blast.hk/threads/114312/)
 end
 
 function riveryahello()
-	sampAddChatMessage(script_name.."{FFFFFF} Загружен! Открыть меню: {dc4747}"..table.concat(rkeys.getKeysName(ActOpenMenuKey.v), " + ").."{ffffff} или {dc4747}"..ini.commands.openmenu..". {FFFFFF}Автор: {dc4747}"..script_author, 0x73b461)
-	
+	if ini.main.riveryahellomsg then
+		sampAddChatMessage(script_name.."{FFFFFF} Загружен! Открыть меню: {dc4747}"..table.concat(rkeys.getKeysName(ActOpenMenuKey.v), " + ").."{ffffff} или {dc4747}"..ini.commands.openmenu..". {FFFFFF}Автор: {dc4747}"..script_author, 0x73b461)
+	end
 	local lastver = update():getLastVersion()
     if thisScript().version < lastver then
 		updatesavaliable = true
         sampRegisterChatCommand('riveryaupd', function()
             update():download()
         end)
-		sampAddChatMessage(script_name..'{ffffff} Вышло обновление скрипта ({dc4747}'..thisScript().version..'{ffffff} -> {42B166}'..lastver..'{ffffff}), введите {dc4747}/riveryaupd{ffffff} для обновления!', 0x73b461)
+		sampAddChatMessage(script_name..'{ffffff} Вышло обновление скрипта ({dc4747}'..thisScript().version..'{ffffff} -> {42B166}'..lastver..'{ffffff}), введите {dc4747}/riveryaupd{ffffff} для обновления...', 0x73b461)
+		sampAddChatMessage(script_name..'{ffffff} ...или по нажатию кнопки в меню!', 0x73b461)
 		addOneOffSound(0, 0, 0, 1058)
 	end
 	if thisScript().version > lastver then
 		updatesavaliable = false
-
 	end
 end
 
@@ -581,6 +969,7 @@ function main()
 	rp_thread = lua_thread.create_suspended(rp_weapons)
     rp_thread:run()
 	-- rp guns by Gorskin --------------------
+	updatefps()
 	
 	local duration = 0.3 -- Описание персонажа by Cosmo (https://www.blast.hk/threads/84975/)
 	local max_alpha = 255 -- Описание персонажа by Cosmo (https://www.blast.hk/threads/84975/)
@@ -701,13 +1090,29 @@ function main()
 			if rail then deleteObject(rail); rail = nil end
 		end
         ----------------
-        if isKeyDown(90) and not sampIsCursorActive() then
-			taskPlayAnim(PLAYER_PED, "facsurp", "PED", 9, false, false, false, true, -1)
-		else if isCharPlayingAnim(PLAYER_PED, "facsurp") then taskPlayAnim(PLAYER_PED, "facsurpm", "PED", 9, false, false, false, false, -1) end end
-		if sampIsChatInputActive() then taskPlayAnim(PLAYER_PED, "factalk", "PED", 9, false, false, false, true, -1)
-		else if isCharPlayingAnim(PLAYER_PED, "factalk") then taskPlayAnim(PLAYER_PED, "facsurpm", "PED", 9, false, false, false, false, -1) end end
-		----------------
 		if ini.main.bindkeys then
+			if isCharOnAnyBike(playerPed) and isKeyCheckAvailable() and isKeyDown(0xA0) then	-- onBike&onMoto SpeedUP [[LSHIFT]] by checkdasound --
+				if bike[getCarModel(storeCarCharIsInNoSave(playerPed))] then
+					setGameKeyState(16, 255)
+					wait(10)
+					setGameKeyState(16, 0)
+				elseif moto[getCarModel(storeCarCharIsInNoSave(playerPed))] then
+					setGameKeyState(1, -128)
+					wait(10)
+					setGameKeyState(1, 0)
+				end
+			end
+			
+			if isCharOnFoot(playerPed) and isKeyDown(0x31) and isKeyCheckAvailable() then -- onFoot&inWater SpeedUP [[1]] by checkdasound --
+				setGameKeyState(16, 256)
+				wait(10)
+				setGameKeyState(16, 0)
+			elseif isCharInWater(playerPed) and isKeyDown(0x31) and isKeyCheckAvailable() then
+				setGameKeyState(16, 256)
+				wait(10)
+				setGameKeyState(16, 0)
+			end
+			
 			if isKeyJustPressed(VK_L) and not sampIsChatInputActive() and not sampIsDialogActive() and not isPauseMenuActive() and not isSampfuncsConsoleActive() then 
 				sampSendChat("/lock") 
 			end
@@ -851,9 +1256,6 @@ function main()
 		if memory.setfloat(13210352, true) ~= ini.main.fog then
 			memory.setfloat(13210352, ini.main.fog, true)
 		end
-		if memory.setfloat(0xCFFA11, true) ~= ini.main.lod then
-			memory.setfloat(0xCFFA11, ini.main.lod, true)
-		end
 
         if ini.cleaner.autoclean then
             if tonumber(get_memory()) > tonumber(ini.cleaner.limit) then
@@ -877,6 +1279,16 @@ function main()
         CDXUTDialog = memory.getuint32(CDialog + 0x1C)
 
     end
+end
+
+function isKeyCheckAvailable()
+	if not isSampLoaded() then
+		return true
+	end
+	if not isSampfuncsLoaded() then
+		return not sampIsChatInputActive() and not sampIsDialogActive()
+	end
+	return not sampIsChatInputActive() and not sampIsDialogActive() and not isSampfuncsConsoleActive()
 end
 
 function ev.onShowDialog(dialogId) 
@@ -1037,7 +1449,15 @@ function ev.onCreate3DText(id, col, pos, dist, wall, PID, VID, text) -- описание
 	end
 end
 
-function ev.onRemove3DTextLabel(id) -- описание персонажа by Cosmo
+function easteregg()
+	textscount = textscount + 1
+	if textscount > #texts then
+		textscount = 6
+	end
+	sampAddChatMessage(script_name.."{ffffff} "..texts[textscount], 0x73b461)
+end
+
+function ev.onRemove3DTextLabel(id) -- описание персонажа by Cosmo (https://www.blast.hk/threads/84975/)
 	for i, info in ipairs(pool) do
 		if info.id == id then
 			table.remove(pool, i)
@@ -1195,24 +1615,24 @@ end
 --=========================================| Шрифты и прочее | =====================================
 local fonts = {}
 imgui.OnInitialize(function()
-	imgui.GetIO().IniFilename = nil
+    imgui.GetIO().IniFilename = nil
+    SwitchTheStyle(ini.themesetting.theme)
     local config = imgui.ImFontConfig()
     config.MergeMode = true
-    config.PixelSnapH = true
-    local iconRanges = new.ImWchar[3](fa.min_range, fa.max_range, 0)
-    imgui.GetIO().Fonts:AddFontFromMemoryCompressedBase85TTF(fa.get_font_data_base85('solid'), 14, config, iconRanges) -- solid - тип иконок, так же есть thin, regular, light и duotone
-	SwitchTheStyle(ini.themesetting.theme)
 	
-	local glyph_ranges = imgui.GetIO().Fonts:GetGlyphRangesCyrillic()
+	
+    local glyph_ranges = imgui.GetIO().Fonts:GetGlyphRangesCyrillic()
     local path = getFolderPath(0x14) .. '\\tahomabd.ttf'
     local path2 = getFolderPath(0x14) .. '\\tahomabd.ttf'
     local path3 = getFolderPath(0x14) .. '\\tahomabd.TTF'
-	
+    local iconRanges = new.ImWchar[3](fa.min_range, fa.max_range, 0)
+	imgui.GetIO().Fonts:AddFontFromMemoryCompressedBase85TTF(fa.get_font_data_base85(ICON_STYLE[ini.themesetting.iconstyle]), 14, config, iconRanges) -- solid - тип иконок, так же есть thin, regular, light и duotone
+    
 	fonts[22] = imgui.GetIO().Fonts:AddFontFromFileTTF(path, 22, nil, glyph_ranges)
-    logofont = imgui.GetIO().Fonts:AddFontFromFileTTF('moonloader/resource/fonts/fa-solid-900.ttf', 32.0, config, iconRanges)
-    fonts[14] = imgui.GetIO().Fonts:AddFontFromFileTTF(path2, 14.5, nil, glyph_ranges)
+    logofont = imgui.GetIO().Fonts:AddFontFromMemoryCompressedBase85TTF(fa.get_font_data_base85(ICON_STYLE[ini.themesetting.iconstyle]), 32, config, iconRanges)
+    fonts[14] = imgui.GetIO().Fonts:AddFontFromFileTTF(path2, 14, nil, glyph_ranges)
+	iconFont = imgui.GetIO().Fonts:AddFontFromMemoryCompressedBase85TTF(fa.get_font_data_base85(ICON_STYLE[ini.themesetting.iconstyle]), 14, config, iconRanges) -- solid - тип иконок, так же есть thin, regular, light и duotone
     fonts[15] = imgui.GetIO().Fonts:AddFontFromFileTTF(path, 16, nil, glyph_ranges)
-    iconFont = imgui.GetIO().Fonts:AddFontFromFileTTF('moonloader/resource/gamefixer/fonts/fa-solid-900.ttf', 15.0, config, iconRanges)
 end)
 --=========================================| Шрифты и прочее | =====================================
 
@@ -1226,42 +1646,49 @@ local Frame = imgui.OnFrame(
             self.HideCursor = false
         end
         imgui.PushStyleVarFloat(imgui.StyleVar.Alpha, riverya.alpha)
+		--renderDrawBox(0, 0, sw, sh, 0x80000000)
 		
-        imgui.SetNextWindowSize(imgui.ImVec2(675, 358), imgui.Cond.FirstUseEver)
+        imgui.SetNextWindowSize(imgui.ImVec2(700, 395), imgui.Cond.FirstUseEver)
 		imgui.SetNextWindowPos(imgui.ImVec2((sw / 2), sh / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
-		imgui.Begin(u8"SAMPFixer by "..script_author.."", new.bool(true), imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoTitleBar + imgui.WindowFlags.NoResize)
-			--------------------[СампХуиксер]--------------------
-			local logotext = u8"SAMPFixer"
-			local versiontext = "by riverya4life"
-            imgui.PushFont(logofont)
-			local LogoSize = imgui.CalcTextSize(logotext)
-			local LogoVerSize = imgui.CalcTextSize(versiontext)
-			imgui.PushStyleColor(imgui.Col.Text, imgui.GetStyle().Colors[imgui.Col.Button])
-			imgui.SetCursorPos(imgui.ImVec2(115 / 2 - LogoSize.x / 2, 4))
-			imgui.Text(logotext)
-			imgui.PopFont()
-			imgui.PopStyleColor()
-			--------------------[Не тыкай на меня долбоеб]--------------------
-			if imgui.IsItemClicked(0) then
-				textscount = textscount + 1
-				if textscount > #texts then
-					textscount = 6
+		imgui.PushStyleVarVec2(imgui.StyleVar.WindowPadding, imgui.ImVec2(0, 0))
+		imgui.Begin(fa.GEARS..u8" SAMPFixer by "..script_author.."", new.bool(true), imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoTitleBar + imgui.WindowFlags.NoResize)
+			imgui.SetCursorPos(imgui.ImVec2(0, 0))
+			imgui.PushStyleColor(imgui.Col.ChildBg, imgui.ImVec4(0.0, 0.0, 0.0, 0.0))
+			imgui.BeginChild("##LeftMenu", imgui.ImVec2(170, 395), false)
+				--------------------[СампХуиксер]--------------------
+				local logotext = u8"SAMPFixer"
+				imgui.PushFont(logofont)
+				local LogoSize = imgui.CalcTextSize(logotext)
+				local LogoVerSize = imgui.CalcTextSize(versiontext)
+				imgui.PushStyleColor(imgui.Col.Text, imgui.GetStyle().Colors[imgui.Col.Button])
+				imgui.SetCursorPos(imgui.ImVec2(115 / 2 - LogoSize.x / 2, 4))
+				imgui.Text(logotext)
+				imgui.PopFont()
+				imgui.PopStyleColor()
+				--------------------[Не тыкай на меня долбоеб]--------------------
+				if imgui.IsItemClicked(0) then
+					easteregg()
 				end
-				sampAddChatMessage(script_name.."{ffffff} "..texts[textscount], 0x73b461)
-			end
-			--------------------[Не тыкай на меня долбоеб]--------------------
+				--------------------[Не тыкай на меня долбоеб]--------------------
+				imgui.SetCursorPos(imgui.ImVec2(-4, 33))
+				imgui.PushFont(fonts[14])
+				imgui.PushFont(iconFont)
+				imgui.CustomMenu(tabs, tab, imgui.ImVec2(142, 35))
+				imgui.PopFont()
+				imgui.PopFont()
+			imgui.EndChild()
 			
-			imgui.SetCursorPos(imgui.ImVec2(-3, 33))
-			imgui.CustomMenu(tabs, tab, imgui.ImVec2(144, 40))
-			
-			imgui.SetCursorPos(imgui.ImVec2(649, 5))
+			imgui.SetCursorPos(imgui.ImVec2(674, 5))
 			if CloseButton("##Close", new.bool(true), 0) then
 				riverya.switch()
 			end
 			imgui.SetCursorPos(imgui.ImVec2(0, 35))
 			
-			imgui.SetCursorPos(imgui.ImVec2(155, 33))
-			imgui.BeginChild('##main', imgui.ImVec2(-1, 318), true)
+			imgui.PushStyleVarVec2(imgui.StyleVar.WindowPadding, imgui.ImVec2(5, 5))
+			
+			imgui.SetCursorPos(imgui.ImVec2(150, 33))
+			imgui.BeginChild('##main', imgui.ImVec2(-6, 356), true)
+			imgui.PushFont(fonts[14])
 			if tab[0] == 1 then
 				if ini.main.blockweather then
 					imgui.Text(fa.CLOUD_SUN_RAIN..u8" Погода:")
@@ -1283,13 +1710,13 @@ local Frame = imgui.OnFrame(
 						gotofunc("SetTime")
 					end
 				end
-				if imgui.Checkbox(u8" Блокировать изменение погоды сервером", checkboxes.blockweather) then
+				if imgui.Checkbox(u8"Блокировать изменение погоды сервером", checkboxes.blockweather) then
 					ini.main.blockweather = checkboxes.blockweather[0] 
 					save()
 					gotofunc("BlockWeather")
 					gotofunc("SetWeather")
 				end
-				if imgui.Checkbox(u8" Блокировать изменение времени сервером", checkboxes.blocktime) then
+				if imgui.Checkbox(u8"Блокировать изменение времени сервером", checkboxes.blocktime) then
 					ini.main.blocktime = checkboxes.blocktime[0] 
 					save()
 					gotofunc("BlockTime")
@@ -1324,8 +1751,8 @@ local Frame = imgui.OnFrame(
                     save()
                     gotofunc("Vsync")
                 end
-				imgui.SetCursorPos(imgui.ImVec2(353, 15))
-				imgui.BeginTitleChild(u8"Блокировка клавиш", imgui.ImVec2(150, 130), 4, 13)
+				imgui.SetCursorPos(imgui.ImVec2(373, 15))
+				imgui.BeginTitleChild(u8"Блокировка клавиш", imgui.ImVec2(150, 150), 4, 13, false)
 					if imgui.Checkbox(u8" F1", checkboxes.nop_samp_keys_F1) then
 						ini.nop_samp_keys.key_F1 = checkboxes.nop_samp_keys_F1[0]
 						save()
@@ -1353,15 +1780,15 @@ local Frame = imgui.OnFrame(
 				imgui.EndChild()
 
 			elseif tab[0] == 2 then
-				if imgui.Checkbox(u8" Отключить пост-обработку", checkboxes.postfx) then
+				if imgui.Checkbox(u8"Отключить пост-обработку", checkboxes.postfx) then
 					ini.main.postfx = checkboxes.postfx[0]
-					gotofunc("NoPostfx")
 					save()
+					gotofunc("NoPostfx")
 				end
 				imgui.SameLine()
 				imgui.Hint(u8"Отключает пост-обработку, если у вас слабый пк.", 0.2)
 				
-				if imgui.Checkbox(u8" Отключить эффекты", checkboxes.noeffects) then
+				if imgui.Checkbox(u8"Отключить эффекты", checkboxes.noeffects) then
 					ini.main.noeffects = checkboxes.noeffects[0]
 					save()
 				end
@@ -1405,17 +1832,18 @@ local Frame = imgui.OnFrame(
                         if imgui.SliderInt(u8"##lod", sliders.lod, 0, 300) then
                             ini.main.lod = sliders.lod[0]
                             save()
+							gotofunc("LodDist")
                         end
                         imgui.SameLine()
 						imgui.Hint(u8"Изменяет дальность прорисовки лодов.", 0.2)
                         end
                     end
                     if imgui.CollapsingHeader(fa.EYE..u8' Очистка памяти', imgui.TreeNodeFlags.DefaultOpen) then
-                        if imgui.Checkbox(u8" Включить авто-очистку памяти", checkboxes.autoclean) then
+                        if imgui.Checkbox(u8"Включить авто-очистку памяти", checkboxes.autoclean) then
                             ini.cleaner.autoclean = checkboxes.autoclean[0]
                             save()
                         end
-                        if imgui.Checkbox(u8" Показывать сообщение об очистке памяти", checkboxes.cleaninfo) then
+                        if imgui.Checkbox(u8"Показывать сообщение об очистке памяти", checkboxes.cleaninfo) then
                             ini.cleaner.cleaninfo = checkboxes.cleaninfo[0]
                             save()
                         end
@@ -1557,7 +1985,7 @@ local Frame = imgui.OnFrame(
 					imgui.OpenPopup(fa.KEYBOARD..u8" Бинды") 
                 end
                 if imgui.BeginPopupModal(fa.KEYBOARD..u8" Бинды", new.bool(true), imgui.WindowFlags.NoScrollbar + imgui.WindowFlags.NoResize) then
-                	imgui.SetWindowSizeVec2(imgui.ImVec2(275, 75))
+                	imgui.SetWindowSizeVec2(imgui.ImVec2(275, 82))
 				    if imgui.Button(fa.KEYBOARD..u8(ini.main.bindkeys and ' Выключить' or ' Включить')..u8" бинды для Arizona RP") then
 						ini.main.bindkeys = not ini.main.bindkeys
 	                    save()
@@ -1571,7 +1999,7 @@ local Frame = imgui.OnFrame(
 	                imgui.SameLine()
 	                imgui.Text(u8" Открыть меню скрипта")
 	                if ini.main.bindkeys then
-	                	imgui.SetWindowSizeVec2(imgui.ImVec2(275, 232))
+	                	imgui.SetWindowSizeVec2(imgui.ImVec2(275, 240))
 	                	imgui.Text(u8(bindkeysinfo))
 	                end
 					imgui.EndPopup()
@@ -1583,9 +2011,9 @@ local Frame = imgui.OnFrame(
                 end
                 if imgui.BeginPopupModal(fa.FACE_SMILE..u8" Role Play", new.bool(true), imgui.WindowFlags.NoScrollbar + imgui.WindowFlags.NoResize) then
             	 	if ini.main.smilesys then
-						imgui.SetWindowSizeVec2(imgui.ImVec2(382, 98))
+						imgui.SetWindowSizeVec2(imgui.ImVec2(393, 108))
 					else
-						imgui.SetWindowSizeVec2(imgui.ImVec2(382, 74))
+						imgui.SetWindowSizeVec2(imgui.ImVec2(393, 82))
 					end
 				    imgui.Text(u8"Ваш пол:")
 		            imgui.SameLine()
@@ -1600,7 +2028,7 @@ local Frame = imgui.OnFrame(
 						ini.main.smilesys = not ini.main.smilesys
 	                    save()
 	                end
-	                imgui.SetCursorPosX(170)
+	                imgui.SetCursorPosX(171)
 	                if imgui.Button(fa.GUN..u8(ini.main.rpguns and ' Выключить' or ' Включить')..u8" отыгровку оружия") then
 						ini.main.rpguns = not ini.main.rpguns
 						rp_thread:terminate()
@@ -1609,7 +2037,7 @@ local Frame = imgui.OnFrame(
 	                end
 	                if ini.main.smilesys then
 			            if imgui.CollapsingHeader(u8"Доступные смайлы") then
-			            	imgui.SetWindowSizeVec2(imgui.ImVec2(382, 323))
+			            	imgui.SetWindowSizeVec2(imgui.ImVec2(393, 335))
 			                if ini.main.gender == 0 then
 			                    imgui.PushTextWrapPos(imgui.GetWindowSize().x - 40 );
 			                    imgui.Text(u8(dostupsmiletext0))
@@ -1622,7 +2050,7 @@ local Frame = imgui.OnFrame(
 					imgui.EndPopup()
 			    end
 
-			    if imgui.Button(fa.COMMENTS..u8(ini.main.separate_msg and ' Выключить' or ' Включить')..u8" разделение сообщения на два", imgui.ImVec2(387, 25)) then
+			    if imgui.Button(fa.COMMENTS..u8(ini.main.separate_msg and ' Выключить' or ' Включить')..u8" разделение сообщения на два", imgui.ImVec2(385, 25)) then
                     ini.main.separate_msg = not ini.main.separate_msg
                     save()
                 end
@@ -1665,6 +2093,11 @@ local Frame = imgui.OnFrame(
 				imgui.SameLine()
 				imgui.Hint(u8"Изменяет значение закругления окна, чайлдов и пунктов меню (стандартное значение 4.0).", 0.2)
 				
+				if imgui.Combo(translate('textChooseLanguage'), lang_int, lang_items, #lang_list) then
+					ini.main.language = lang_int[0]+1
+					save()
+				end
+				
 				if imgui.SliderFloat(u8"##RoundedOther", sliders.roundthemecomp, 0, 10, '%.1f') then
 					ini.themesetting.roundedcomp = sliders.roundthemecomp[0]
 					imgui.GetStyle().FrameRounding = sliders.roundthemecomp[0]
@@ -1677,7 +2110,7 @@ local Frame = imgui.OnFrame(
 				imgui.SameLine()
 				imgui.Hint(u8"Изменяет значение закругления компонентов, к примеру кнопки, слайдеры и т.д. (стандартное значение 2.0).", 0.2)
 
-				if imgui.Checkbox(u8" Обводка окна и компонентов", checkboxes.windowborder) then
+				if imgui.Checkbox(u8"Обводка окна и компонентов", checkboxes.windowborder) then
 					ini.themesetting.windowborder = checkboxes.windowborder[0]
 					if ini.themesetting.windowborder == true then
 						imgui.GetStyle().WindowBorderSize = 1
@@ -1694,20 +2127,32 @@ local Frame = imgui.OnFrame(
 				end
 				imgui.SameLine()
 				imgui.Hint(u8"Включает и выключает легкую обводку окна и компонентов (кнопки, слайдеры и т.д.).", 0.2)
-				if imgui.Checkbox(u8" Центрирование текста пунктов меню", checkboxes.centeredmenu) then
+				if imgui.Checkbox(u8"Центрирование текста пунктов меню", checkboxes.centeredmenu) then
 					ini.themesetting.centeredmenu = checkboxes.centeredmenu[0]
 					save()
 				end
 				imgui.SameLine()
 				imgui.Hint(u8"Вы можете выровнять текст в меню по своему желанию.", 0.2)
 
-				if imgui.Checkbox(u8" Новый цвет диалогов", checkboxes.dialogstyle) then
+				if imgui.Checkbox(u8"Новый цвет диалогов", checkboxes.dialogstyle) then
 					ini.themesetting.dialogstyle = checkboxes.dialogstyle[0]
 					save()
 					gotofunc("DialogStyle")
 				end
 				imgui.SameLine()
 				imgui.Hint(u8"Изменяет цвет диалоговых окон похожих как на лаунчере Arizona RP.", 0.2)
+				
+				if imgui.Checkbox(u8"Сообщение скрипта при загрузке", checkboxes.riveryahellomsg) then
+					ini.main.riveryahellomsg = checkboxes.riveryahellomsg[0]
+					save()
+					if ini.main.riveryahellomsg then
+						sampAddChatMessage(script_name..'{FFFFFF} Приветственное сообщение скрипта {73b461}включено!', 0x73b461)
+					else
+						sampAddChatMessage(script_name..'{FFFFFF} Приветственное сообщение скрипта {DC4747}отключено!', 0x73b461)
+					end
+				end
+				imgui.SameLine()
+				imgui.Hint(u8"Включает или выключает сообщение скрипта при загрузке", 0.2)
 				
 				if imgui.Button(u8'Перезагрузить скрипт '..fa.ARROWS_ROTATE..'') then
 					showCursor(false, false)
@@ -1727,9 +2172,9 @@ local Frame = imgui.OnFrame(
 						imgui.OpenPopup(fa.DOWNLOAD..u8" Доступно обновление!")
 					end
 					if imgui.BeginPopupModal(fa.DOWNLOAD..u8" Доступно обновление!", new.bool(true), imgui.WindowFlags.NoScrollbar + imgui.WindowFlags.NoResize) then
-						imgui.SetWindowSizeVec2(imgui.ImVec2(305, 130))
-						imgui.Text(u8"Вам доступно обновление по данным с Github!")
-						imgui.Text(u8"Желаете обновиться с "..thisScript().version..u8" до актуальной версии?")
+						imgui.SetWindowSizeVec2(imgui.ImVec2(305, 135))
+						imgui.Text(u8"Вам доступно обновление с GitHub!")
+						imgui.Text(u8"Желаете обновиться с "..thisScript().version..u8" до актуальной?")
 						imgui.NewLine()
 						imgui.SetCursorPosX(5)
 						if imgui.Button(u8"Обновить", imgui.ImVec2(295, 20)) then
@@ -1754,13 +2199,11 @@ local Frame = imgui.OnFrame(
                 end
                 if imgui.BeginPopupModal(fa.CLOCK..u8" Лог обновлений", new.bool(true), imgui.WindowFlags.NoScrollbar + imgui.WindowFlags.NoResize) then
                 	imgui.SetWindowSizeVec2(imgui.ImVec2(475, 300))
-				    if imgui.CollapsingHeader(fa.CLOCK .. u8' Лог обновлений', imgui.TreeNodeFlags.DefaultOpen) then
-						for k,v in pairs(listUpdate) do
-							local header = v.v
-							if k == 1 then header = fa.FIRE .. u8(' ' .. header .. ' | Актуальная версия') end
-							if imgui.CollapsingHeader(header) then
-								imgui.TextWrapped(u8(v.context))
-							end
+					for k,v in pairs(listUpdate) do
+						local header = v.v
+						if k == 1 then header = fa.FIRE .. u8(' ' .. header .. ' | Актуальная версия') end
+						if imgui.CollapsingHeader(header) then
+							imgui.TextWrapped(u8(v.context))
 						end
 					end
 					imgui.EndPopup()
@@ -1776,8 +2219,8 @@ local Frame = imgui.OnFrame(
 				imgui.PushStyleColor(imgui.Col.Text, imgui.ImVec4(0.5, 0.5, 0.5, 1))
 				imgui.Text(fa.USER..u8' Пользователь: '..mynick..'['..myid..u8'] ('..fa.SIGNAL..u8' Пинг: '..myping..')')
 				imgui.Text(fa.CLOCK..u8(string.format(' Текущая дата: %s', os.date("%d.%m.%Y %H:%M:%S"))))
-				imgui.Text(fa.TERMINAL..u8(string.format(' Средняя задержка: %.3f мс | Кадров: (%.1f FPS)', 1000.0 / framerate, framerate)))
-				imgui.Text(fa.FOLDER..u8' Версия: '..thisScript().version..' '..versionold..'')
+				imgui.Text(fa.IMAGES..u8(string.format(" FPS: "..fps.."")))
+				--imgui.Text(fa.FOLDER..u8' Версия: '..thisScript().version..' '..versionold..'')
 				imgui.Text(fa.ADDRESS_CARD..u8' Автор:')
 				imgui.SameLine() 
 				imgui.Link('https://github.com/riverya4life', script_author)
@@ -1811,8 +2254,26 @@ local Frame = imgui.OnFrame(
 					end
 					imgui.EndPopup()
 				end
+				
+				imgui.SetCursorPos(imgui.ImVec2(435, 10))
+				imgui.BeginChild("##iconstyles", imgui.ImVec2(100, 135), true)
+					imgui.Text(fa.INFO..u8" Тип иконок:")
+					for k, v in ipairs(ICON_STYLE) do
+						if imgui.RadioButtonBool(v, ini.themesetting.iconstyle == k) then
+							ini.themesetting.iconstyle = k
+							save()
+							sampAddChatMessage(script_name.."{FFFFFF} Стиль иконок изменен на {dc4747}"..v.."!", 0x73b461)
+							sampAddChatMessage(script_name.."{FFFFFF} Так как Вы внесли изменения в стиль иконок скрипта, ему потребуется перезагрузка (Кнопка 'Перезагрузить скрипт')!", 0x73b461)
+						end
+					end
+				imgui.EndChild()
 			end
+			imgui.PopFont()
+			imgui.PopStyleColor()
 			imgui.EndChild()
+			--[[imgui.SetCursorPosX(-100)
+			imgui.SetCursorPosY(391)
+			rainbowlines(2.5, 900, 0, 0)]]
         imgui.End()
     end
 )
@@ -1821,6 +2282,15 @@ function onReceivePacket(id) -- будет флудить wrong server password до тех пор, 
 	if id == 37 then
 		sampSetGamestate(1)
 	end
+end
+
+function updatefps()
+    lua_thread.create(function()
+        while true do
+            fps = ("%.0f"):format(memory.getfloat(0xB7CB50, true))
+			wait(150)
+        end
+    end)
 end
 
 function ev.onSendPlayerSync(data) -- банни хоп
@@ -1880,10 +2350,6 @@ function sampSetDialogPos(x, y)
     memory.setint32(CDXUTDialog + 0x11A, y, true)
 end
 
-function editRadarMapColor(Alpha)
-    memory.setuint8(0x5864BD, Alpha, true)
-end
-
 function join_argb(a, r, g, b)
     local argb = b  -- b
     argb = bit.bor(argb, bit.lshift(g, 8))  -- g
@@ -1920,7 +2386,7 @@ function samp.onShowTextDraw(id, data)
     end
 end
 
-function samp.onSetMapIcon(iconId, position, type, color, style)
+function ev.onSetMapIcon(iconId, position, type, color, style)
     if type > MAX_SAMP_MARKERS then
         return false
     end
@@ -1968,6 +2434,7 @@ function gotofunc(fnc) -- by Gorskin (https://www.blast.hk/members/157398/) (про
         memory.fill(0x460773, 0x90, 7, false) --CJFix
         memory.setuint32(12761548, 1051965045, false) -- car speed fps fix
 		memory.setint8(0x58D3DA, 1, true) -- Меняет размер обводки displayGameText
+        memory.fill(0x00531155, 0x90, 5, true) -- Фикс прыжка в фоновом режиме с AntiAFK
         ---------------------------------------------
         if get_samp_version() == "r1" then
             memory.write(sampGetBase() + 0x64ACA, 0xFB, 1, true) --Min FontSize -5
@@ -2045,9 +2512,7 @@ function gotofunc(fnc) -- by Gorskin (https://www.blast.hk/members/157398/) (про
         end
     end
     if fnc == "AlphaMap" or fnc == "all" then
-        if ini.main.alphamap then
-            editRadarMapColor(ini.main.alphamap)
-        end
+		memory.setuint8(0x5864BD, ini.main.alphamap, true)
     end
 	if fnc == "BlockSampKeys" or fnc == "all" then
         if ini.nop_samp_keys.key_F1 then
@@ -2107,6 +2572,20 @@ function gotofunc(fnc) -- by Gorskin (https://www.blast.hk/members/157398/) (про
         local newram = ("%d"):format(tonumber(get_memory()))
         if ini.cleaner.cleaninfo then
             sampAddChatMessage(script_name.."{FFFFFF} Памяти до: {dc4747}"..oldram.." МБ. {FFFFFF}Памяти после: {dc4747}"..newram.." МБ. {FFFFFF}Очищено: {dc4747}"..oldram - newram.." МБ.", 0x73b461)
+        end
+    end
+	if fnc == "LodDist" or fnc == "all" then
+        memory.setfloat(0xCFFA11, ini.main.lod, true)
+        local aWrites = {
+            [1] = 0x555172+2, [2] = 0x555198+2, [3] = 0x5551BB+2, [4] = 0x55522E+2, [5] = 0x555238+2,
+            [6] = 0x555242+2, [7] = 0x5552F4+2, [8] = 0x5552FE+2, [9] = 0x555308+2, [10] = 0x555362+2,
+            [11] = 0x55537A+2, [12] = 0x555388+2, [13] = 0x555A95+2, [14] = 0x555AB1+2, [15] = 0x555AFB+2,
+            [16] = 0x555B05+2, [17] = 0x555B1C+2, [18] = 0x555B2A+2, [19] = 0x555B38+2, [20] = 0x555B82+2,
+            [21] = 0x555B8C+2, [22] = 0x555B9A+2, [23] = 0x5545E6+2, [24] = 0x554600+2, [25] = 0x55462A+2,
+            [26] = 0x5B527A+2,
+        }
+        for i = 0, #aWrites do
+            writeMemory(aWrites[i], 4, 0xCFFA11, true)
         end
     end
 	-----------------------Исправления блять-----------------------
@@ -2480,12 +2959,71 @@ function orderedPairs(t)
 end
 ------------------
 -------------------------------------------------------------
+function gr_line_with_up_padding(circle_angles, distance, size, from, to)
+    distance = distance - size * 2 - 3
+    local draw_list = imgui.GetWindowDrawList()
+    local p = imgui.GetCursorScreenPos()
+    draw_list:AddCircleFilled(imgui.ImVec2(p.x + size  + (size / 100), p.y + size), size, from, circle_angles)
+    draw_list:AddRectFilled(imgui.ImVec2(p.x, p.y + size), imgui.ImVec2(p.x + size * 2, p.y + size * 2), from)
+    draw_list:AddCircleFilled(imgui.ImVec2(p.x + size + (size / 100) + distance, p.y + size), size, to, circle_angles)
+    draw_list:AddRectFilled(imgui.ImVec2(p.x + size + distance, p.y + size), imgui.ImVec2(p.x + size * 2 + distance, p.y + size * 2), to)
+    draw_list:AddRectFilled(imgui.ImVec2(p.x + size, p.y), imgui.ImVec2(p.x + distance + size, p.y + size * 2), from)
+    local a, r, g, b = explode_argb(to)
+    for i = 0, distance do
+        a = (i / distance) * 255
+    draw_list:AddRectFilled(imgui.ImVec2(p.x + i + size, p.y), imgui.ImVec2(p.x + 1 + i + size, p.y + size * 2), join_argb(a, r, g, b))
+    end
+end
+
+function gr_line_with_down_padding(circle_angles, distance, size, from, to)
+    distance = distance - size * 2 - 3
+    local draw_list = imgui.GetWindowDrawList()
+    local p = imgui.GetCursorScreenPos()
+    draw_list:AddCircleFilled(imgui.ImVec2(p.x + size  + (size / 100), p.y + size), size, from, circle_angles)
+    draw_list:AddRectFilled(imgui.ImVec2(p.x, p.y + size), imgui.ImVec2(p.x + size * 2, p.y), from)
+    draw_list:AddCircleFilled(imgui.ImVec2(p.x + size + (size / 100) + distance, p.y + size), size, to, circle_angles)
+    draw_list:AddRectFilled(imgui.ImVec2(p.x + size + distance, p.y + size), imgui.ImVec2(p.x + size * 2 + distance, p.y), to)
+    draw_list:AddRectFilled(imgui.ImVec2(p.x + size, p.y), imgui.ImVec2(p.x + distance + size, p.y + size * 2), from)
+    local a, r, g, b = explode_argb(to)
+    for i = 0, distance do
+        a = (i / distance) * 255
+    draw_list:AddRectFilled(imgui.ImVec2(p.x + i + size, p.y), imgui.ImVec2(p.x + 1 + i + size, p.y + size * 2), join_argb(a, r, g, b))
+    end
+end
+
 function join_argb(a, b, g, r)
     local argb = b  -- b
     argb = bit.bor(argb, bit.lshift(g, 8))  -- g
     argb = bit.bor(argb, bit.lshift(r, 16)) -- r
     argb = bit.bor(argb, bit.lshift(a, 24)) -- a
     return argb
+end
+
+function rainbow(speed, alpha, offset)
+	speed = 2.5
+    local clock = os.clock() + offset
+    local r = math.floor(math.sin(clock * speed) * 127 + 128)
+    local g = math.floor(math.sin(clock * speed + 2) * 127 + 128)
+    local b = math.floor(math.sin(clock * speed + 4) * 127 + 128)
+    return r, g, b, alpha
+end
+
+function rainbow_line(distance, size) -- by Fomikus
+    local op = imgui.GetCursorPos()
+    local p = imgui.GetCursorScreenPos()
+    for i = 0, distance do
+    r, g, b, a = rainbow(1, 255, i / -50)
+    imgui.GetWindowDrawList():AddRectFilled(imgui.ImVec2(p.x + i, p.y), imgui.ImVec2(p.x + i + 1, p.y + size), join_argb(a, r, g, b))
+    end
+    imgui.SetCursorPos(imgui.ImVec2(op.x, op.y + size + imgui.GetStyle().ItemSpacing.y))
+end
+
+function explode_argb(argb)
+    local a = bit.band(bit.rshift(argb, 24), 0xFF)
+    local r = bit.band(bit.rshift(argb, 16), 0xFF)
+    local g = bit.band(bit.rshift(argb, 8), 0xFF)
+    local b = bit.band(argb, 0xFF)
+    return a, r, g, b
 end
 
 function saturate(f) 
@@ -2557,61 +3095,61 @@ smiletextfemale = {
 -------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------
 dostupsmiletext0 = [[
-=( — выглядит огорченным, чем-то расстроен
-( — слегка расстроен, не подаёт виду
-:( — выглядит подавленным, грустит
-:(( — очень расстроился, выглядит убитым
-:с — печально опустил нижнюю губу
-о_о — выпучил глаза от удивления
-О_О — очень сильно шокирован
-:о — слегка удивлён
-:О — сильно удивился, охает
-:/ — испытывает легкое недовольство
--_- — испытывает недовольное отвращение
-=_= — испытывает недовольное отвращение
-:D — добродушно смеется
-xD — угарает во весь голос, закрывая глаза со смеху
-с: — скруглил щёки, доволен как ребёнок
-С: — сильно радуется с блестящими глазами.
-:* — посылает воздушный поцелуй
-=) — улыбается как придурок с лёгкой иронией
-) — легонько улыбается
-)) — давит лыбу, чем-то доволен
-:) — добродушно улыбается
-:)) — лыбится во весь рот
-;) — легонько подмигивает
-;( — тихо плачет неторопливыми слезами
-;(( — ревёт, захлёбывается слезами
-:-) — улыбается как глупый клоун
+=( - выглядит огорченным, чем-то расстроен
+( - слегка расстроен, не подаёт виду
+:( - выглядит подавленным, грустит
+:(( - очень расстроился, выглядит убитым
+:с - печально опустил нижнюю губу
+о_о - выпучил глаза от удивления
+О_О - очень сильно шокирован
+:о - слегка удивлён
+:О - сильно удивился, охает
+:/ - испытывает легкое недовольство
+-_- - испытывает недовольное отвращение
+=_= - испытывает недовольное отвращение
+:D - добродушно смеется
+xD - угарает во весь голос, закрывая глаза со смеху
+с: - скруглил щёки, доволен как ребёнок
+С: - сильно радуется с блестящими глазами.
+:* - посылает воздушный поцелуй
+=) - улыбается как придурок с лёгкой иронией
+) - легонько улыбается
+)) - давит лыбу, чем-то доволен
+:) - добродушно улыбается
+:)) - лыбится во весь рот
+;) - легонько подмигивает
+;( - тихо плачет неторопливыми слезами
+;(( - ревёт, захлёбывается слезами
+:-) - улыбается как глупый клоун
 ]]
 
 dostupsmiletext1 = [[
-=( — выглядит огорченной, чем-то расстроена
-( — слегка расстроена, не подаёт виду
-:( — выглядит подавленной, грустит
-:(( — очень расстроилась, выглядит убитой
-:с — печально опустила нижнюю губу
-o_o — выпучила глаза от удивления
-О_О — очень сильно шокирована
-:о — слегка удивлёна
-:О — сильно удивилась, охает
-:/ — испытывает легкое недовольство
--_- — испытывает недовольное отвращение
-=_= — испытывает сильное отвращение
-:D — добродушно смеется
-xD — угарает во весь голос, закрывая глаза со смеху
-с: — скруглила щёки, довольна как ребёнок
-C: — сильно радуется с блестящими глазами
-:* — посылает воздушный поцелуй
-=) — улыбается как дура с лёгкой иронией
-) — легонько улыбается
-)) — давит лыбу, чем-то довольна
-:) — добродушно улыбается
-:)) — лыбится во весь рот
-;) — легонько подмигивает
-;( — тихо плачет неторопливыми слезами
-;(( — ревёт, захлёбывается слезами
-:-) — улыбается как глупый клоун
+=( - выглядит огорченной, чем-то расстроена
+( - слегка расстроена, не подаёт виду
+:( - выглядит подавленной, грустит
+:(( - очень расстроилась, выглядит убитой
+:с - печально опустила нижнюю губу
+o_o - выпучила глаза от удивления
+О_О - очень сильно шокирована
+:о - слегка удивлёна
+:О - сильно удивилась, охает
+:/ - испытывает легкое недовольство
+-_- - испытывает недовольное отвращение
+=_= - испытывает сильное отвращение
+:D - добродушно смеется
+xD - угарает во весь голос, закрывая глаза со смеху
+с: - скруглила щёки, довольна как ребёнок
+C: - сильно радуется с блестящими глазами
+:* - посылает воздушный поцелуй
+=) - улыбается как дура с лёгкой иронией
+) - легонько улыбается
+)) - давит лыбу, чем-то довольна
+:) - добродушно улыбается
+:)) - лыбится во весь рот
+;) - легонько подмигивает
+;( - тихо плачет неторопливыми слезами
+;(( - ревёт, захлёбывается слезами
+:-) - улыбается как глупый клоун
 ]]
 
 bindkeysinfo = [[
@@ -2642,13 +3180,13 @@ function SwitchTheStyle(theme)
   
 	--==[ STYLE ]==--
 	style.WindowPadding = ImVec2(5, 5)
-	style.FramePadding = ImVec2(5, 3)
-	style.ItemSpacing = ImVec2(6, 4)
-	style.ItemInnerSpacing = ImVec2(1, 1)
-	style.TouchExtraPadding = ImVec2(0, 0)
-	style.IndentSpacing = 6.0
-	style.ScrollbarSize = 12.0
-	style.GrabMinSize = 20.0
+	style.FramePadding = ImVec2(5, 4)
+	style.ItemSpacing = ImVec2(5, 5)
+	style.ItemInnerSpacing = ImVec2(5, 5)
+	style.TouchExtraPadding = ImVec2(5, 0)
+	style.IndentSpacing = 5
+	style.ScrollbarSize = 10
+	style.GrabMinSize = 17
 	--==[ BORDER ]==--
 	style.WindowBorderSize = ini.themesetting.windowborder
 	style.ChildBorderSize = 1
